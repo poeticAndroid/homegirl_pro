@@ -19,6 +19,7 @@ function _init(args)
   for c = 0, 7 do
     scrn:palette(c + 8, 15, 15, c * 2)
   end
+  scrn:autocolor()
   scrnw, scrnh = scrn:size()
 end
 

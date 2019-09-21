@@ -12,6 +12,7 @@ function _init(args)
   scrn:palette(1, 13, 14, 15)
   scrn:palette(2, 0, 0, 5)
   scrn:palette(3, 0, 10, 15)
+  scrn:autocolor()
   gfx.bgcolor(0)
   gfx.fgcolor(1)
   if #args > 0 then
