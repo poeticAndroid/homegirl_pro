@@ -22,7 +22,8 @@ do
     else
       table.insert(self.children, child)
     end
-    child.attachto(self.mainvp, self.rootvp)
+    child:attachto(self.mainvp, self.rootvp)
+    return child
   end
   function Screen:attachwindow(name, child)
     if name then
@@ -30,7 +31,8 @@ do
     else
       table.insert(self.children, child)
     end
-    child.attachto(self.rootvp, self.rootvp)
+    child:attachto(self.rootvp, self.rootvp)
+    return child
   end
 
   function Screen:font(font)
@@ -85,12 +87,17 @@ do
       self:title(self._title)
       if self._lastmbtn == 1 and x >= btnx then
         view.zindex(self.rootvp, 0)
-        view.focused(self.titlevp, false)
+        view.focused(self.rootvp, false)
       else
         view.focused(self.mainvp, true)
       end
     end
     self._lastmbtn = btn
+    view.active(self.rootvp)
+    if input.hotkey() == "." then
+      view.zindex(self.rootvp, 0)
+      view.focused(self.rootvp, false)
+    end
     for name, child in pairs(self.children) do
       child:step(time)
     end
