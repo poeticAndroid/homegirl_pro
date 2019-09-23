@@ -30,7 +30,7 @@ do
     else
       table.insert(self.children, child)
     end
-    child:attachto(self.mainvp, self.container)
+    child:attachto(self.mainvp, self.screen)
     return child
   end
 
@@ -61,19 +61,36 @@ do
     gfx.fgcolor(focused and self.lightcolor or self.bgcolor)
     gfx.bar(5, 4, btnw - 10, btnh - 8)
     if mbtn == 1 then
+      view.attribute(self._closebtn, "pressed", "true")
       self:inset(0, 0, btnw, btnh)
     else
+      view.attribute(self._closebtn, "pressed", "false")
       self:outset(0, 0, btnw, btnh)
     end
+    view.visible(self._closebtn, self.onclose and true or false)
 
     view.active(self._titlevp)
-    view.position(self._titlevp, btnw, 0)
-    view.size(self._titlevp, sw - btnw * 2, btnh)
+    local btns = 0
+    if self.onclose then
+      btns = btns + 1
+    end
+    view.position(self._titlevp, btnw * btns, 0)
+    if self.onhide then
+      btns = btns + 1
+    end
+    local w, h = view.size(self._titlevp, sw - btnw * btns, btnh)
     gfx.bgcolor(focused and self.fgcolor or self.bgcolor)
     gfx.cls()
-    gfx.fgcolor(self.textcolor)
-    text.draw(self._title, self._font, math.max(2, (sw - btnw * 2) / 2 - tw / 2), 1)
-    self:outset(0, 0, sw - btnw * 2, btnh)
+    gfx.fgcolor(focused and self.fgtextcolor or self.bgtextcolor)
+    text.draw(self._title, self._font, math.max(2, w / 2 - tw / 2), 1)
+    self:outset(0, 0, w, h)
+    if not self.onclose then
+      gfx.pixel(0, h - 1, gfx.pixel(0, h - 2))
+      gfx.pixel(1, h - 1, gfx.pixel(1, h - 2))
+    end
+    if not self.onhide then
+      gfx.pixel(w - 2, h - 1, gfx.pixel(w - 2, h - 2))
+    end
 
     view.active(self._hidebtn)
     mx, my, mbtn = input.mouse()
@@ -89,10 +106,13 @@ do
     gfx.fgcolor(focused and self.lightcolor or self.bgcolor)
     gfx.bar(4, 3, btnw / 2 - 4, btnh / 2 - 3)
     if mbtn == 1 then
+      view.attribute(self._hidebtn, "pressed", "true")
       self:inset(0, 0, btnw, btnh)
     else
+      view.attribute(self._hidebtn, "pressed", "false")
       self:outset(0, 0, btnw, btnh)
     end
+    view.visible(self._hidebtn, self.onhide and true or false)
 
     view.active(self._resbtn)
     mx, my, mbtn = input.mouse()
@@ -104,6 +124,7 @@ do
     self:outset(-2, -2, 10, 10)
     gfx.pixel(0, 6, gfx.pixel(1, 6))
     gfx.pixel(6, 0, gfx.pixel(6, 1))
+    view.visible(self._resbtn, self.resizable and true or false)
     view.active(prevvp)
   end
 
@@ -168,7 +189,7 @@ do
     return Widget.size(self, w, h)
   end
 
-  function Window:step()
+  function Window:step(time)
     local prevvp = view.active()
     view.active(self.container)
     local vw, vh = view.size(self.container)
@@ -176,13 +197,21 @@ do
     if self._lastmbtn == 0 and mbtn == 1 then
       view.zindex(self.container, -1)
     end
-    if mbtn == 1 then
-      if self._moving then
-        local left, top = self:position()
-        self:position(left + mx - self._movingx, top + my - self._movingy)
-      end
-    else
-      self._moving = false
+
+    view.active(self._closebtn)
+    _x, _y, mbtn = input.mouse()
+    if self.onclose and view.attribute(self._closebtn, "pressed") == "true" and mbtn == 0 then
+      self:redraw()
+      view.active(prevvp)
+      return self:onclose()
+    end
+
+    view.active(self._hidebtn)
+    _x, _y, mbtn = input.mouse()
+    if self.onhide and view.attribute(self._hidebtn, "pressed") == "true" and mbtn == 0 then
+      self:redraw()
+      view.active(prevvp)
+      return self:onhide()
     end
 
     view.active(self._titlevp)
@@ -204,10 +233,21 @@ do
 
     view.active(self.container)
     _x, _y, mbtn = input.mouse()
+    if mbtn == 1 then
+      if self._moving then
+        local left, top = self:position()
+        self:position(left + mx - self._movingx, top + my - self._movingy)
+      end
+    else
+      self._moving = false
+    end
     if self._focused ~= view.focused(self.container) or self._lastmbtn ~= mbtn then
       self._focused = view.focused(self.container)
       self._lastmbtn = mbtn
       self:redraw()
+    end
+    for name, child in pairs(self.children) do
+      child:step(time)
     end
     view.active(prevvp)
   end

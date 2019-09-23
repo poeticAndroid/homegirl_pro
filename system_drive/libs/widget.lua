@@ -6,7 +6,8 @@ do
   Widget.lightcolor = 2
   Widget.fgcolor = 3
   Widget.bgcolor = 0
-  Widget.textcolor = 1
+  Widget.fgtextcolor = 1
+  Widget.bgtextcolor = 1
   Widget.parentvp = false
 
   function Widget:_new(label)
@@ -28,6 +29,24 @@ do
       self.screen = Widget.screen
       self.container = view.new(self.parentvp, l, t, w, h)
     end
+  end
+
+  function Widget:destroy()
+    if self.children then
+      for name, child in pairs(self.children) do
+        child:destroy()
+      end
+    end
+    self.children = nil
+    view.remove(self.container)
+    self.container = nil
+    self.parentvp = nil
+    self.screen = nil
+  end
+  function Widget:destroychild(name)
+    local child = self.children[name]
+    child:destroy()
+    table.remove(self.children, name)
   end
 
   function Widget:position(left, top)

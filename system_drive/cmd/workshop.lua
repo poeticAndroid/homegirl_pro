@@ -15,6 +15,9 @@ function _init()
     end
   end
   win = scrn:attachwindow(nil, Window:new("some folder", 32, 32, 320, 90))
+  win.resizable = true
+  win2 = win:attach(nil, Window:new("nest me!", 32, 32, 320, 90))
+  win2.resizable = true
 end
 
 function _step(t)
