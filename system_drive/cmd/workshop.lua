@@ -14,14 +14,15 @@ function _init()
       gfx.pixel(x, y, (x + y) % 2)
     end
   end
-  win = scrn:attachwindow(nil, Window:new("some folder", 32, 32, 320, 90))
+  win = scrn:attachwindow(nil, Window:new("Work in progress", 32, 32, 350, 45))
   win.resizable = true
-  win2 = win:attach(nil, Window:new("nest me!", 32, 32, 320, 90))
-  win2.resizable = true
 end
 
 function _step(t)
   scrn:step(t)
+  view.active(win.mainvp)
+  text.draw("Homegirl Workshop is under development!", scrn:font(), 4,4)
+  text.draw("Thank you for your patience.. :)", scrn:font(), 4,12)
   view.active(scrn.rootvp)
   if input.hotkey() == "\x1b" then
     sys.exit()
