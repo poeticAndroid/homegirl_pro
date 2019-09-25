@@ -64,10 +64,13 @@
     input.text([text]): text
     input.selected([text]): text
     input.cursor([pos, selected]): pos, selected
+    input.linesperpage([linesperpage]): linesperpage
     input.clearhistory()
     input.hotkey(): hotkey
     input.mouse(): x, y, btn
     input.gamepad([player]): btn
+    input.drag(drop, icon)
+    input.drop(): drop
     input.midi(): byte
 ##  sys
     sys.read(): string

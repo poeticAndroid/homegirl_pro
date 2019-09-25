@@ -12,7 +12,6 @@ function _init(args)
   scrn:palette(1, 13, 14, 15)
   scrn:palette(2, 0, 0, 5)
   scrn:palette(3, 0, 10, 15)
-  scrn:autocolor()
   gfx.bgcolor(0)
   gfx.fgcolor(1)
   if #args > 0 then
@@ -25,6 +24,7 @@ function _init(args)
     sys.exit(1)
   end
   input.cursor(0)
+  input.linesperpage(20)
 end
 
 function _step(t)
@@ -45,10 +45,6 @@ function _step(t)
     left = 0
   end
   if deltalen > 0 then
-    if string.sub(txt, pos, pos + 1) == "\n\n" then
-      input.selected(getindent(lines[line - 1]))
-      txt = input.text()
-    end
     if string.sub(txt, pos - 1, pos) == "\n\t" or string.sub(txt, pos - 2, pos) == "  \t" then
       pos = pos - 1
       sel = 1
