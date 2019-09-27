@@ -1,7 +1,5 @@
 local Widget = require("Widget")
 
-local defaultfont = text.loadfont("Victoria.8b")
-
 local Window = Widget:extend()
 do
   function Window:_new(title, left, top, width, height, parent)
@@ -9,7 +7,6 @@ do
     self:attachto(parent, parent)
     self:position(left, top)
     self:size(width, height)
-    self:font(defaultfont)
     self:title(title)
   end
 
@@ -43,7 +40,7 @@ do
     local focused = view.focused(self.container)
     local mx, my, mbtn = input.mouse()
     local sw, sh = view.size(self.container)
-    local tw, th = text.draw(self._title, self._font, 0, 0)
+    local tw, th = text.draw(self._title, self.font, 0, 0)
     local btnw, btnh = math.ceil((th + 2) * 1.5), th + 2
     view.position(self.mainvp, 3, btnh)
     view.size(self.mainvp, sw - 6, sh - btnh - 3)
@@ -53,18 +50,16 @@ do
     self:inset(2, 2, sw - 4, sh - 4)
 
     view.active(self._closebtn)
-    mx, my, mbtn = input.mouse()
     view.size(self._closebtn, btnw, btnh)
     gfx.bgcolor(focused and self.fgcolor or self.bgcolor)
     gfx.cls()
+    gfx.fgcolor(self.darkcolor)
     gfx.bar(4, 3, btnw - 8, btnh - 6)
     gfx.fgcolor(focused and self.lightcolor or self.bgcolor)
     gfx.bar(5, 4, btnw - 10, btnh - 8)
-    if mbtn == 1 then
-      view.attribute(self._closebtn, "pressed", "true")
+    if view.attribute(self._closebtn, "pressed") == "true" then
       self:inset(0, 0, btnw, btnh)
     else
-      view.attribute(self._closebtn, "pressed", "false")
       self:outset(0, 0, btnw, btnh)
     end
     view.visible(self._closebtn, self.onclose and true or false)
@@ -82,7 +77,7 @@ do
     gfx.bgcolor(focused and self.fgcolor or self.bgcolor)
     gfx.cls()
     gfx.fgcolor(focused and self.fgtextcolor or self.bgtextcolor)
-    text.draw(self._title, self._font, math.max(2, w / 2 - tw / 2), 1)
+    text.draw(self._title, self.font, math.max(2, w / 2 - tw / 2), 1)
     self:outset(0, 0, w, h)
     if not self.onclose then
       gfx.pixel(0, h - 1, gfx.pixel(0, h - 2))
@@ -93,11 +88,11 @@ do
     end
 
     view.active(self._hidebtn)
-    mx, my, mbtn = input.mouse()
     view.position(self._hidebtn, sw - btnw, 0)
     view.size(self._hidebtn, btnw, btnh)
     gfx.bgcolor(focused and self.fgcolor or self.bgcolor)
     gfx.cls()
+    gfx.fgcolor(self.darkcolor)
     gfx.bar(3, 2, btnw - 6, btnh - 4)
     gfx.fgcolor(focused and self.fgcolor or self.bgcolor)
     gfx.bar(4, 3, btnw - 8, btnh - 6)
@@ -105,17 +100,14 @@ do
     gfx.bar(3, 2, btnw / 2 - 2, btnh / 2 - 1)
     gfx.fgcolor(focused and self.lightcolor or self.bgcolor)
     gfx.bar(4, 3, btnw / 2 - 4, btnh / 2 - 3)
-    if mbtn == 1 then
-      view.attribute(self._hidebtn, "pressed", "true")
+    if view.attribute(self._hidebtn, "pressed") == "true" then
       self:inset(0, 0, btnw, btnh)
     else
-      view.attribute(self._hidebtn, "pressed", "false")
       self:outset(0, 0, btnw, btnh)
     end
     view.visible(self._hidebtn, self.onhide and true or false)
 
     view.active(self._resbtn)
-    mx, my, mbtn = input.mouse()
     view.position(self._resbtn, sw - 8, sh - 8)
     view.size(self._resbtn, 8, 8)
     gfx.bgcolor(focused and self.fgcolor or self.bgcolor)
@@ -126,14 +118,6 @@ do
     gfx.pixel(6, 0, gfx.pixel(6, 1))
     view.visible(self._resbtn, self.resizable and true or false)
     view.active(prevvp)
-  end
-
-  function Window:font(font)
-    if font then
-      self._font = font
-      self:redraw()
-    end
-    return self._font
   end
 
   function Window:title(title)
@@ -198,17 +182,13 @@ do
       view.zindex(self.container, -1)
     end
 
-    view.active(self._closebtn)
-    _x, _y, mbtn = input.mouse()
-    if self.onclose and view.attribute(self._closebtn, "pressed") == "true" and mbtn == 0 then
+    if self.onclose and self:gotclicked(self._closebtn) then
       self:redraw()
       view.active(prevvp)
       return self:onclose()
     end
 
-    view.active(self._hidebtn)
-    _x, _y, mbtn = input.mouse()
-    if self.onhide and view.attribute(self._hidebtn, "pressed") == "true" and mbtn == 0 then
+    if self.onhide and self:gotclicked(self._hidebtn) then
       self:redraw()
       view.active(prevvp)
       return self:onhide()
@@ -241,7 +221,7 @@ do
     else
       self._moving = false
     end
-    if self._focused ~= view.focused(self.container) or self._lastmbtn ~= mbtn then
+    if self._focused ~= view.focused(self.container) or mbtn ~= 0 then
       self._focused = view.focused(self.container)
       self._lastmbtn = mbtn
       self:redraw()
