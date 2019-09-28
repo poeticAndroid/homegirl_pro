@@ -21,15 +21,6 @@ do
       view.active(self.mainvp)
     end
   end
-  function Window:attach(name, child)
-    if name then
-      self.children[name] = child
-    else
-      table.insert(self.children, child)
-    end
-    child:attachto(self.mainvp, self.screen)
-    return child
-  end
 
   function Window:redraw()
     if not self.container then
