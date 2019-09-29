@@ -27,12 +27,20 @@ do
     view.active(prevvp)
   end
 
-  function Icon:step()
+  function Icon:step(time)
     local prevvp = view.active()
     view.active(self.container)
     local mx, my, mb = input.mouse()
     if mb > 0 then
+      if self.selected and self._dbltime > time then
+        if self.onopen then
+          self:onopen()
+        end
+      end
+      self._dbltime = 0
       self:select()
+    elseif self._dbltime == 0 then
+      self._dbltime = time + 512
     end
     view.active(prevvp)
   end
@@ -43,6 +51,7 @@ do
   end
   function Icon:deselect()
     self.selected = false
+    self._dbltime = 0
     self:redraw()
   end
 
