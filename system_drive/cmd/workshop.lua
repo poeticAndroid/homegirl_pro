@@ -1,4 +1,4 @@
-local Screen, Window, Icon = require("screen"), require("window"), require("icon")
+local Screen, Window, Icon, UI = require("screen"), require("window"), require("icon"), require("ui")
 local scrn, desktop
 local winx, winy = 50, 11
 local nextrefresh = 0
@@ -24,7 +24,7 @@ function _step(t)
     for i, drive in ipairs(drives) do
       drives[drive .. ":"] = true
       if not desktop.children[drive .. ":"] then
-        desktop:attach(drive .. ":", Icon:new(drive .. ":", iconfor(drive .. ":"))).onopen = onopen
+        desktop:attach(drive .. ":", Icon:new(drive, iconfor(drive .. ":"))).onopen = onopen
       end
     end
     for name, child in pairs(desktop.children) do
@@ -35,12 +35,15 @@ function _step(t)
     for name, win in pairs(scrn.children) do
       local board = win.children["items"]
       if board then
-        local items = fs.list(name)
+        board = board.children["items"]
+      end
+      if board then
+        local items = fs.list(name) or {}
         table.sort(items)
         for i, item in ipairs(items) do
           items[name .. item] = true
           if not board.children[name .. item] then
-            board:attach(name .. item, Icon:new(item, iconfor(name .. item))).onopen = onopen
+            board:attach(name .. item, Icon:new(notrailslash(item), iconfor(name .. item))).onopen = onopen
           end
         end
         for item, child in pairs(board.children) do
@@ -59,7 +62,10 @@ function onopen(icon)
   if fs.isdir(filename) then
     opendir(filename)
   else
-    local ext = string.lower(string.sub(filename, 1 - string.find(string.reverse(filename), "%.")))
+    local ext = ""
+    if string.find(filename, "%.") then
+      ext = string.lower(string.sub(filename, 1 - string.find(string.reverse(filename), "%.")))
+    end
     if ext == "lua" then
       sys.exec(filename)
     elseif ext == "gif" then
@@ -73,13 +79,13 @@ function onopen(icon)
 end
 
 function opendir(filename)
-  local sw, sh = scrn:size()
-  local win = scrn:attachwindow(filename, Window:new(filename, winx, winy, sw / 2, sh / 2))
+  local sw, sh = view.size(scrn.rootvp)
+  local win = scrn:attachwindow(filename, Window:new(basename(filename), winx, winy, sw / 2, sh / 2))
   win.resizable = true
   win.onclose = function()
     scrn:destroychild(filename)
   end
-  win:attach("items", Icon.Board:new())
+  win:attach("items", UI.Scrollbox:new()):attach("items", Icon.Board:new())
   nextrefresh = 0
 
   winx = winx + 10
@@ -98,11 +104,34 @@ function iconfor(filename)
   elseif fs.isdir(filename) then
     return _DRIVE .. "icons/dir.gif"
   else
-    local ext = string.lower(string.sub(filename, 1 - string.find(string.reverse(filename), "%.")))
-    print(ext)
+    local ext = ""
+    if string.find(filename, "%.") then
+      ext = string.lower(string.sub(filename, 1 - string.find(string.reverse(filename), "%.")))
+    end
     if fs.isfile(_DRIVE .. "icons/" .. ext .. ".gif") then
       return _DRIVE .. "icons/" .. ext .. ".gif"
     end
   end
   return _DRIVE .. "icons/file.gif"
+end
+
+function basename(path)
+  path = notrailslash(path)
+  local i = string.find(string.reverse(path), "/") or string.find(string.reverse(path), ":") or #path
+  return string.sub(path, -i + 1)
+end
+
+function trailslash(path)
+  if string.sub(path, -1) == "/" then
+    return path
+  else
+    return path .. "/"
+  end
+end
+function notrailslash(path)
+  if string.sub(path, -1) == "/" then
+    return string.sub(path, 1, -2)
+  else
+    return path
+  end
 end

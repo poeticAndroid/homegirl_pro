@@ -19,6 +19,7 @@ do
       self._hidebtn = view.new(self.container)
       self._resbtn = view.new(self.container)
       view.active(self.mainvp)
+      self:redraw()
     end
   end
 
@@ -211,6 +212,9 @@ do
       end
     else
       self._moving = false
+      if view.focused(self.container) then
+        view.focused(self.mainvp, true)
+      end
     end
     if self._focused ~= view.focused(self.container) or mbtn ~= 0 then
       self._focused = view.focused(self.container)

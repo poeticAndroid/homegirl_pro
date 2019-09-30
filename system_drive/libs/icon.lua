@@ -67,9 +67,6 @@ local Board = Widget:extend()
 do
   function Board:_new()
     self.children = {}
-    self._col = 4
-    self._row = 2
-    self._nextcol = 0
   end
   function Board:attach(name, child)
     name = name or child.label
@@ -78,6 +75,25 @@ do
     end
     self.children[name] = child
     child:attachto(self.container, self.screen)
+    self:tidychild(child)
+    return child
+  end
+  function Board:attachto(...)
+    Widget.attachto(self, ...)
+    self:tidy()
+  end
+
+  function Board:tidy()
+    self._col = 4
+    self._row = 2
+    self._nextcol = 0
+    self._dirty = false
+    self:size(view.size(self.parentvp))
+    for name, child in pairs(self.children) do
+      self:tidychild(child)
+    end
+  end
+  function Board:tidychild(child)
     local vw, vh = self:size()
     local cw, ch = child:size()
     if self._row + ch > vh then
@@ -87,18 +103,33 @@ do
     child:position(self._col, self._row)
     self._nextcol = math.max(self._nextcol, self._col + cw + 4)
     self._row = self._row + ch + 2
-    return child
-  end
-  function Board:attachto(...)
-    Widget.attachto(self, ...)
-    self:step()
   end
 
   function Board:step(time)
     local prevvp = view.active()
     view.active(self.container)
+    local hotkey = input.hotkey()
+    if hotkey == "a" then
+      for name, child in pairs(self.children) do
+        child:select()
+      end
+    elseif hotkey == "r" or not self._dirty then
+      self:tidy()
+    end
     gfx.cls()
     local vw, vh = self:size()
+    for name, child in pairs(self.children) do
+      child.drop = "" .. name
+      local cx, cy = child:position()
+      local cw, ch = child:size()
+      if vw < cx + cw then
+        vw = cx + cw
+      end
+      if vh < cy + ch then
+        vh = cy + ch
+      end
+    end
+    self:size(vw, vh)
     local mx, my, mb = input.mouse()
     local drop = input.drop()
     while drop do
@@ -126,10 +157,10 @@ do
       end
       drop = input.drop()
     end
-    self:size(view.size(self.parentvp))
     if self._draging and mb == 1 and (self._selx1 ~= mx or self._sely1 ~= my) then
       for name, child in pairs(self.children) do
         if child.selected then
+          self._dirty = true
           input.drag(child.drop, child.icon[2])
         end
       end
@@ -183,7 +214,6 @@ do
       self._draging = false
     end
     for name, child in pairs(self.children) do
-      child.drop = "" .. name
       child:step(time)
     end
     view.active(prevvp)
