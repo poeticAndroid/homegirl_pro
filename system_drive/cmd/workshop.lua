@@ -42,11 +42,28 @@ function _step(t)
       end
       if board then
         local items = fs.list(name) or {}
+        local iconsonly = listhasicons(items)
         table.sort(items)
         for i, item in ipairs(items) do
-          items[name .. item] = true
-          if not board.children[name .. item] then
-            board:attach(name .. item, Icon:new(notrailslash(item), iconfor(name .. item))).onopen = onopen
+          local filename = name .. item
+          local show = not iconsonly
+          if fs.isfile(notrailslash(filename) .. ".gif") then
+            show = true
+          end
+          if string.sub(filename, -10) == ":drive.gif" then
+            show = false
+          end
+          if
+            string.sub(filename, -4) == ".gif" and
+              (fs.isfile(string.sub(filename, 1, -5)) or fs.isdir(string.sub(filename, 1, -5)))
+           then
+            show = false
+          end
+          if show then
+            items[filename] = true
+            if not board.children[filename] then
+              board:attach(filename, Icon:new(notrailslash(item), iconfor(filename))).onopen = onopen
+            end
           end
         end
         for item, child in pairs(board.children) do
@@ -82,6 +99,7 @@ function onopen(icon)
 end
 
 function opendir(filename)
+  filename = trailslash(filename)
   local sw, sh = view.size(scrn.rootvp)
   local win = scrn:attachwindow(filename, Window:new(basename(filename), winx, winy, sw / 2, sh / 2))
   win.resizable = true
@@ -93,10 +111,17 @@ function opendir(filename)
     if not string.find(drop, "%:") then
       return nil
     end
-    if not fs.rename(drop, filename .. basename(drop)) then
-      fs.write(filename .. basename(drop), fs.read(drop))
+    if fs.rename(drop, filename .. basename(drop)) then
+      if fs.isfile(notrailslash(drop) .. ".gif") then
+        fs.rename(notrailslash(drop) .. ".gif", filename .. basename(drop) .. ".gif")
+      end
+    else
+      sys.exec(_DRIVE .. "cmd/copy.lua", {drop, filename})
+      if fs.isfile(notrailslash(drop) .. ".gif") then
+        fs.write(filename .. basename(drop) .. ".gif", fs.read(notrailslash(drop) .. ".gif"))
+      end
     end
-    nextrefresh = 0
+    nextrefresh = nextrefresh + 1024
     return Icon:new(basename(drop), iconfor(drop))
   end
   nextrefresh = 0
@@ -111,13 +136,35 @@ function opendir(filename)
   end
 end
 
+function listhasicons(list)
+  local seen = {}
+  for i, item in ipairs(list) do
+    seen[notrailslash(item)] = true
+    if seen[notrailslash(item) .. ".gif"] then
+      return true
+    end
+    if string.sub(item, -4) == ".gif" then
+      if seen[string.sub(item, 1, -5)] then
+        return true
+      end
+    end
+  end
+  return false
+end
+
 function iconfor(filename)
   if string.sub(filename, -1) == ":" then
-    return _DRIVE .. "icons/drive.gif"
+    if fs.isfile(filename .. "drive.gif") then
+      return filename .. "drive.gif"
+    else
+      return _DRIVE .. "icons/drive.gif"
+    end
+  elseif fs.isfile(notrailslash(filename) .. ".gif") then
+    return notrailslash(filename) .. ".gif"
   elseif fs.isdir(filename) then
     return _DRIVE .. "icons/dir.gif"
   else
-    local ext = ""
+    local ext = "file"
     if string.find(filename, "%.") then
       ext = string.lower(string.sub(filename, 1 - string.find(string.reverse(filename), "%.")))
     end
@@ -130,12 +177,17 @@ end
 
 function basename(path)
   path = notrailslash(path)
-  local i = string.find(string.reverse(path), "/") or string.find(string.reverse(path), ":") or #path
-  return string.sub(path, -i + 1)
+  local i = string.find(string.reverse(path), "/") or string.find(string.reverse(path), ":")
+  if i then
+    return string.sub(path, -i + 1)
+  else
+    return path
+  end
 end
-
 function trailslash(path)
   if string.sub(path, -1) == "/" then
+    return path
+  elseif string.sub(path, -1) == ":" then
     return path
   else
     return path .. "/"
@@ -143,6 +195,8 @@ function trailslash(path)
 end
 function notrailslash(path)
   if string.sub(path, -1) == "/" then
+    return string.sub(path, 1, -2)
+  elseif string.sub(path, -1) == ":" then
     return string.sub(path, 1, -2)
   else
     return path

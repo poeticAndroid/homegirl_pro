@@ -89,18 +89,6 @@ do
 
     view.active(prevvp)
   end
-
-  function Scrollbox:destroy()
-    if self.children then
-      for name, child in pairs(self.children) do
-        child:destroy()
-      end
-    end
-    self.children = nil
-    self.container = nil
-    self.parentvp = nil
-    self.screen = nil
-  end
 end
 
 return {

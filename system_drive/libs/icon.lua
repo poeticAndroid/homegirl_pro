@@ -5,6 +5,12 @@ do
   function Icon:_new(label, iconfile)
     self.label = label
     self.icon = image.load(iconfile)
+    if not self.icon then
+      self.icon = image.load(_DRIVE .. "icons/file.gif")
+    end
+    if not self.icon[2] then
+      self.icon = image.load(_DRIVE .. "icons/file.gif")
+    end
   end
 
   function Icon:attachto(...)
