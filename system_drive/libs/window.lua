@@ -1,4 +1,4 @@
-local Widget = require("Widget")
+local Widget = require("widget")
 
 local Window = Widget:extend()
 do
