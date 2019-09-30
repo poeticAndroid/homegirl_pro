@@ -89,7 +89,13 @@ do
     self._nextcol = 0
     self._dirty = false
     self:size(view.size(self.parentvp))
+    local names = {}
     for name, child in pairs(self.children) do
+      table.insert(names, name)
+    end
+    table.sort(names)
+    for i, name in pairs(names) do
+      local child = self.children[name]
       self:tidychild(child)
     end
   end

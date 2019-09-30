@@ -37,6 +37,9 @@ function _step(t)
       if board then
         board = board.children["items"]
       end
+      if board and #(board.children) > 0 and not view.focused(win.container) then
+        board = nil
+      end
       if board then
         local items = fs.list(name) or {}
         table.sort(items)
@@ -85,7 +88,17 @@ function opendir(filename)
   win.onclose = function()
     scrn:destroychild(filename)
   end
-  win:attach("items", UI.Scrollbox:new()):attach("items", Icon.Board:new())
+  local board = win:attach("items", UI.Scrollbox:new()):attach("items", Icon.Board:new())
+  board.ondrop = function(self, drop)
+    if not string.find(drop, "%:") then
+      return nil
+    end
+    if not fs.rename(drop, filename .. basename(drop)) then
+      fs.write(filename .. basename(drop), fs.read(drop))
+    end
+    nextrefresh = 0
+    return Icon:new(basename(drop), iconfor(drop))
+  end
   nextrefresh = 0
 
   winx = winx + 10
