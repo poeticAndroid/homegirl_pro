@@ -41,7 +41,7 @@ function _init(args)
     return Icon:new(path.basename(drop), iconfor(drop))
   end
   refresh()
-  sys.stepinterval(1)
+  sys.stepinterval(-1)
 end
 
 function _step(t)

@@ -23,12 +23,14 @@ do
     view.active(self.container)
     local vw, vh = view.size(self.container)
     local iw, ih = image.size(self.icon[1])
-    local tw, th = text.draw(self.label, self.font)
+    local tw, th = text.draw(self.label, self.font, vw, vh)
     view.size(self.container, math.max(iw, tw), ih + th + 1)
     vw, vh = view.size(self.container)
-    gfx.cls()
-    gfx.fgcolor(self.fgtextcolor)
+    -- gfx.cls()
     image.draw(self.icon[self.selected and 2 or 1], vw / 2 - iw / 2, 0, 0, 0, iw, ih)
+    gfx.fgcolor(self.selected and self.fgcolor or self.bgcolor)
+    gfx.bar(vw / 2 - tw / 2, ih + 1, tw, th)
+    gfx.fgcolor(self.fgtextcolor)
     text.draw(self.label, self.font, vw / 2 - tw / 2, ih + 1)
     view.active(prevvp)
   end
@@ -130,10 +132,20 @@ do
     end
     gfx.cls()
     local vw, vh = self:size()
+    if self.backgroundimage then
+      image.draw(self.backgroundimage, 0, 0, 0, 0, vw, vh)
+    end
     for name, child in pairs(self.children) do
       child.drop = "" .. name
       local cx, cy = child:position()
       local cw, ch = child:size()
+      if self.backgroundimage then
+        view.active(child.container)
+        image.copymode(0)
+        image.draw(self.backgroundimage, 0, 0, cx, cy, cw, ch)
+        image.copymode(1)
+        child:redraw()
+      end
       if vw < cx + cw then
         vw = cx + cw
       end
@@ -141,6 +153,7 @@ do
         vh = cy + ch
       end
     end
+    view.active(self.container)
     self:size(vw, vh)
     local mx, my, mb = input.mouse()
     local drop = input.drop()
@@ -204,9 +217,16 @@ do
     if mb == 1 then
       self._selx2 = mx
       self._sely2 = my
-      gfx.fgcolor(self.fgcolor)
-      local x, y = math.min(self._selx1, self._selx2), math.min(self._sely1, self._sely2)
+      local x, y = math.min(self._selx1, self._selx2) + 1, math.min(self._sely1, self._sely2) + 1
       local w, h = math.abs(self._selx1 - self._selx2), math.abs(self._sely1 - self._sely2)
+      gfx.fgcolor(self.bgcolor)
+      gfx.bar(x, y, w, 1)
+      gfx.bar(x, y, 1, h)
+      gfx.bar(x + w, y, 1, h)
+      gfx.bar(x, y + h, w, 1)
+      x = x - 1
+      y = y - 1
+      gfx.fgcolor(self.fgcolor)
       gfx.bar(x, y, w, 1)
       gfx.bar(x, y, 1, h)
       gfx.bar(x + w, y, 1, h)
