@@ -20,18 +20,22 @@ function path.split(pathname)
   return segs
 end
 
-function path.resolve(base, rel)
-  local _segs, segs = table.concat(path.split(base), path.split(rel)), {}
-  for i, seg in ipairs(_segs) do
-    if string.sub(seg, -1) == "%:" then
-      segs = {seg}
-    elseif seg == "" then
-      segs = {segs[1]}
-    elseif seg == "." then
-    elseif seg == ".." then
-      table.remove(segs)
-    else
-      table.insert(segs, seg)
+function path.resolve(...)
+  local segs = {}
+  local rels = {...}
+  for i, rel in ipairs(rels) do
+    local _segs = path.split(rel)
+    for i, seg in ipairs(_segs) do
+      if string.sub(seg, -1) == ":" then
+        segs = {seg}
+      elseif seg == "" then
+        segs = {segs[1]}
+      elseif seg == "." then
+      elseif seg == ".." then
+        table.remove(segs)
+      else
+        table.insert(segs, seg)
+      end
     end
   end
   local abspath = ""
