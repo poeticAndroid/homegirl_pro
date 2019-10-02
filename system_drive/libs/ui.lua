@@ -8,8 +8,6 @@ do
   end
   function Scrollbox:attachto(...)
     Widget.attachto(self, ...)
-    -- view.remove(self.container)
-    -- self.container = self.parentvp
     self._hscrollbar = view.new(self.parentvp)
     self._vscrollbar = view.new(self.parentvp)
     self:redraw()
@@ -58,6 +56,17 @@ do
   end
   function Scrollbox:redraw()
     local prevvp = view.active()
+    if not self._dither then
+      view.active(self.container)
+      view.size(self.container, 2, 2)
+      self._dither = image.new(2, 2, 2)
+      gfx.fgcolor(self.bgcolor)
+      gfx.bar(0, 0, 2, 2)
+      gfx.fgcolor(self.darkcolor)
+      gfx.plot(0, 0)
+      gfx.plot(1, 1)
+      image.copy(self._dither, 0, 0, 0, 0, 2, 2)
+    end
     local bw, bh, bp, bs
     local vw, vh = view.size(self.parentvp)
     vw, vh = self:size(vw - self.barsize, vh - self.barsize)
@@ -74,8 +83,11 @@ do
     bs = math.min(1, bw / cw)
     bp = -cl / cw
     gfx.cls()
-    self:outset(bp * (bw - 2) + 1, 1, bs * (bw - 2), bh - 2)
-    self:inset(0, 0, bw, bh)
+    image.draw(self._dither, 0, 0, 0, 0, bw, bh)
+    self:inset(0, 0, bw + 1, bh + 1)
+    gfx.fgcolor(self.bgcolor)
+    gfx.bar(bp * bw, 1, bs * bw, bh - 1)
+    self:outset(bp * bw, 1, bs * bw, bh - 1)
 
     view.active(self._vscrollbar)
     view.zindex(self._vscrollbar, -1)
@@ -84,8 +96,11 @@ do
     bs = math.min(1, bh / ch)
     bp = -ct / ch
     gfx.cls()
-    self:outset(1, bp * (bh - 2) + 1, bw - 2, bs * (bh - 2))
-    self:inset(0, 0, bw, bh)
+    image.draw(self._dither, 0, 0, 0, 0, bw, bh)
+    self:inset(0, 0, bw + 1, bh + 1)
+    gfx.fgcolor(self.bgcolor)
+    gfx.bar(1, bp * bh, bw - 1, bs * bh)
+    self:outset(1, bp * bh, bw - 1, bs * bh)
 
     view.active(prevvp)
   end

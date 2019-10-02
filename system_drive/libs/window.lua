@@ -5,8 +5,8 @@ do
   function Window:_new(title, left, top, width, height, parent)
     self.children = {}
     self:attachto(parent, parent)
-    self:position(left, top)
     self:size(width, height)
+    self:position(left, top)
     self:title(title)
   end
 
@@ -17,7 +17,7 @@ do
       self._closebtn = view.new(self.container)
       self._titlevp = view.new(self.container)
       self._hidebtn = view.new(self.container)
-      self._resbtn = view.new(self.container)
+      self._resbtn = view.new(self.container, 8, 8, 8, 8)
       view.active(self.mainvp)
       self:redraw()
     end
@@ -100,14 +100,15 @@ do
     view.visible(self._hidebtn, self.onhide and true or false)
 
     view.active(self._resbtn)
-    view.position(self._resbtn, sw - 8, sh - 8)
-    view.size(self._resbtn, 8, 8)
+    local w, h = view.size(self._resbtn)
+    view.position(self._resbtn, sw - w, sh - h)
+    -- view.size(self._resbtn, 8, 8)
     gfx.bgcolor(focused and self.fgcolor or self.bgcolor)
     gfx.cls()
-    self:outset(0, 0, 10, 10)
-    self:outset(-2, -2, 10, 10)
-    gfx.pixel(0, 6, gfx.pixel(1, 6))
-    gfx.pixel(6, 0, gfx.pixel(6, 1))
+    self:outset(0, 0, w + 1, h + 1)
+    self:outset(-1, -1, w + 1, h + 1)
+    gfx.pixel(0, h - 2, gfx.pixel(1, h - 2))
+    gfx.pixel(w - 2, 0, gfx.pixel(w - 2, 1))
     view.visible(self._resbtn, self.resizable and true or false)
     view.active(prevvp)
   end
