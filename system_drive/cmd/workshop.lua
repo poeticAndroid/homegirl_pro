@@ -11,22 +11,40 @@ function _init()
 
   desktop = scrn:attach("desktop", Icon.Board:new())
   desktop.backgroundimage = image.load(_DRIVE .. "stuff/homegirl_wallpaper.gif")[1]
+  
+  view.attribute(scrn.rootvp, "hide-enabled", "true")
   sys.stepinterval(-1)
 end
 
 function _step(t)
   view.active(scrn.rootvp)
   scrn:step(t)
+  local seen = {}
   local drives = fs.drives()
   table.sort(drives)
   for i, drive in ipairs(drives) do
-    drives[drive .. ":"] = true
+    seen[drive .. ":"] = true
     if not desktop.children[drive .. ":"] then
       desktop:attach(drive .. ":", Icon:new(drive, iconfor(drive .. ":"))).onopen = onopen
     end
   end
+
+  local views = view.children(scrn.rootvp)
+  table.sort(views)
+  for i, vp in ipairs(views) do
+    local title = view.attribute(vp,"title")
+    local iconname = view.attribute(vp,"icon")
+    local hidden = not view.visible(vp)
+    if hidden and title and iconname then
+      seen["vp" .. vp] = true
+    end
+    if seen["vp" .. vp] and not desktop.children["vp" .. vp] then
+      desktop:attach("vp" .. vp, Icon:new(title, iconname)).onopen = unhide
+    end
+  end
+  
   for name, child in pairs(desktop.children) do
-    if not drives[name] then
+    if not seen[name] then
       desktop:destroychild(name)
     end
   end
@@ -38,6 +56,13 @@ function onopen(icon)
   if fs.isdir(filename) then
     sys.exec(_DRIVE .. "cmd/open.lua", {filename})
   end
+end
+
+function unhide(icon)
+  local vp = tonumber( string.sub(icon.drop, 3))
+  view.visible(vp, true)
+  view.zindex(vp, -1)
+  view.focused(vp, true)
 end
 
 function iconfor(filename)

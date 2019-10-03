@@ -13,6 +13,8 @@ do
   function Window:attachto(vp, screen)
     if self.parentvp ~= vp then
       Widget.attachto(self, vp, screen)
+      self:title(self:title())
+      self:icon("sys:icons/lua.gif")
       self.mainvp = view.new(self.container)
       self._closebtn = view.new(self.container)
       self._titlevp = view.new(self.container)
@@ -20,6 +22,11 @@ do
       self._resbtn = view.new(self.container, 8, 8, 8, 8)
       view.active(self.mainvp)
       self:redraw()
+    end
+    if view.attribute(self.parentvp, "hide-enabled") == "true" then
+      self.onhide = function(self)
+        view.visible(self.container, false)
+      end
     end
   end
 
@@ -121,6 +128,14 @@ do
       self:redraw()
     end
     return self._title
+  end
+  function Window:icon(icon)
+    if icon then
+      if self.container then
+        self._icon = view.attribute(self.container, "icon", icon)
+      end
+    end
+    return self._icon
   end
 
   function Window:position(l, t)

@@ -18,6 +18,7 @@ function _init(args)
   x = x + #segs * 32
   y = y + #segs * 10
   win = Window:new(path.basename(dirname), x, y, sw / 2, sh / 2)
+  win:icon(iconfor(dirname))
   win.resizable = true
   win.onclose = function()
     sys.exit()
