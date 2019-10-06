@@ -131,8 +131,8 @@ end
 
 function iconfor(filename)
   if string.sub(filename, -1) == ":" then
-    if fs.isfile(filename .. "drive.gif") then
-      return filename .. "drive.gif"
+    if fs.isfile(filename .. "_drive.gif") then
+      return filename .. "_drive.gif"
     else
       return _DRIVE .. "icons/drive.gif"
     end

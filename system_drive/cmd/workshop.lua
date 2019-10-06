@@ -11,7 +11,7 @@ function _init()
 
   desktop = scrn:attach("desktop", Icon.Board:new())
   desktop.backgroundimage = image.load(_DRIVE .. "stuff/homegirl_wallpaper.gif")[1]
-  
+
   view.attribute(scrn.rootvp, "hide-enabled", "true")
   sys.stepinterval(-1)
 end
@@ -32,8 +32,8 @@ function _step(t)
   local views = view.children(scrn.rootvp)
   table.sort(views)
   for i, vp in ipairs(views) do
-    local title = view.attribute(vp,"title")
-    local iconname = view.attribute(vp,"icon")
+    local title = view.attribute(vp, "title")
+    local iconname = view.attribute(vp, "icon")
     local hidden = not view.visible(vp)
     if hidden and title and iconname then
       seen["vp" .. vp] = true
@@ -42,7 +42,7 @@ function _step(t)
       desktop:attach("vp" .. vp, Icon:new(title, iconname)).onopen = unhide
     end
   end
-  
+
   for name, child in pairs(desktop.children) do
     if not seen[name] then
       desktop:destroychild(name)
@@ -59,7 +59,7 @@ function onopen(icon)
 end
 
 function unhide(icon)
-  local vp = tonumber( string.sub(icon.drop, 3))
+  local vp = tonumber(string.sub(icon.drop, 3))
   view.visible(vp, true)
   view.zindex(vp, -1)
   view.focused(vp, true)
@@ -67,8 +67,8 @@ end
 
 function iconfor(filename)
   if string.sub(filename, -1) == ":" then
-    if fs.isfile(filename .. "drive.gif") then
-      return filename .. "drive.gif"
+    if fs.isfile(filename .. "_drive.gif") then
+      return filename .. "_drive.gif"
     else
       return _DRIVE .. "icons/drive.gif"
     end
