@@ -38,8 +38,12 @@ function _step(t)
     if hidden and title and iconname then
       seen["vp" .. vp] = true
     end
-    if seen["vp" .. vp] and not desktop.children["vp" .. vp] then
-      desktop:attach("vp" .. vp, Icon:new(title, iconname)).onopen = unhide
+    if seen["vp" .. vp] then
+      if not desktop.children["vp" .. vp] then
+        desktop:attach("vp" .. vp, Icon:new(title, iconname)).onopen = unhide
+      else
+        desktop.children["vp" .. vp].label = title
+      end
     end
   end
 
