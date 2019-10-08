@@ -76,7 +76,7 @@ do
     gfx.bgcolor(focused and self.fgcolor or self.bgcolor)
     gfx.cls()
     gfx.fgcolor(focused and self.fgtextcolor or self.bgtextcolor)
-    text.draw(self._title, self.font, math.max(2, w / 2 - tw / 2), 1)
+    text.draw(self._title, self.font, math.min(w - tw, w / 2 - tw / 2), 1)
     self:outset(0, 0, w, h)
     if not self.onclose then
       gfx.pixel(0, h - 1, gfx.pixel(0, h - 2))
@@ -109,7 +109,6 @@ do
     view.active(self._resbtn)
     local w, h = view.size(self._resbtn)
     view.position(self._resbtn, sw - w, sh - h)
-    -- view.size(self._resbtn, 8, 8)
     gfx.bgcolor(focused and self.fgcolor or self.bgcolor)
     gfx.cls()
     self:outset(0, 0, w + 1, h + 1)
@@ -213,7 +212,8 @@ do
     view.active(self._resbtn)
     _x, _y, mbtn = input.mouse()
     if mbtn == 1 then
-      self:size(mx + 4, my + 4)
+      vw, vh = view.size(self._resbtn)
+      self:size(mx + vw / 2, my + vh / 2)
       self:redraw()
     else
       self:position()

@@ -17,7 +17,7 @@ function _init(args)
   end
   x = x + #segs * 32
   y = y + #segs * 10
-  win = Window:new(path.basename(dirname), x, y, sw / 2, sh / 2)
+  win = Window:new(dirname, x, y, sw / 2, sh / 2)
   win:icon(iconfor(dirname))
   win.resizable = true
   win.onclose = function()
@@ -69,7 +69,7 @@ function refresh()
     if fs.isfile(path.notrailslash(filename) .. ".gif") then
       show = true
     end
-    if string.sub(filename, -10) == ":drive.gif" then
+    if string.sub(filename, -11) == ":_drive.gif" then
       show = false
     end
     if
