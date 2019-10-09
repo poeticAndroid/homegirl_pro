@@ -11,7 +11,7 @@ function _init(args)
   lasthead = 0
   audio.play(0, snd)
   audio.play(3, snd)
-  print("Playing " .. args[1] .. " at " .. audio.samplefreq(snd) .. " Hz")
+  -- print("Playing " .. args[1] .. " at " .. audio.samplefreq(snd) .. " Hz")
   sys.stepinterval(1000 / 60)
   for c = 1, 7 do
     scrn:palette(c, 15, c * 2, 0)

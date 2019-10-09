@@ -1,12 +1,38 @@
 local Window, Icon, UI, path = require("window"), require("icon"), require("ui"), require("path")
-local win, dirname, focused
+local win, openfile, focused, task, ended
+local log, logx, logy, backimg = "", 0, 0, image.new(8, 8, 3)
 
 function _init(args)
-  dirname = path.trailslash(path.resolve(fs.cd(), args[1]))
+  openfile = path.notrailslash(path.resolve(fs.cd(), table.remove(args, 1)))
+  if fs.isdir(openfile) then
+    openfile = path.trailslash(openfile)
+    createdirwindow()
+  else
+    sys.stepinterval(64)
+    local ext = ""
+    if string.find(openfile, "%.") then
+      ext = string.lower(string.sub(openfile, 1 - string.find(string.reverse(openfile), "%.")))
+    end
+    if ext == "lua" then
+      task = sys.startchild(openfile, args)
+    elseif ext == "gif" then
+      task = sys.startchild(_DRIVE .. "cmd/show.lua", {openfile})
+    elseif ext == "wav" then
+      task = sys.startchild(_DRIVE .. "cmd/play.lua", {openfile})
+    else
+      task = sys.startchild(_DRIVE .. "cmd/edit.lua", {openfile})
+    end
+  end
+end
+
+function createwindow()
+  if win then
+    return
+  end
   local sw, sh = view.size(nil)
   local x, y = 64, 1
   local drives = fs.drives()
-  local segs = path.split(dirname)
+  local segs = path.split(openfile)
   table.sort(drives)
   while #drives > 0 and string.lower(drives[1] .. ":") ~= string.lower(segs[1]) do
     if x >= 10 then
@@ -17,26 +43,32 @@ function _init(args)
   end
   x = x + #segs * 32
   y = y + #segs * 10
-  win = Window:new(dirname, x, y, sw / 2, sh / 2)
-  win:icon(iconfor(dirname))
+  win = Window:new(openfile, x, y, sw / 2, sh / 2)
   win.resizable = true
   win.onclose = function()
     sys.exit()
   end
+  win:step(42)
+  view.active(win.mainvp)
+end
+
+function createdirwindow()
+  createwindow()
+  win:icon(_DRIVE .. "icons/dir.gif")
   view.size(win._resbtn, 11, 11)
   local board = win:attach("items", UI.Scrollbox:new()):attach("items", Icon.Board:new())
   board.ondrop = function(self, drop)
     if not string.find(drop, "%:") then
       return nil
     end
-    if fs.rename(drop, dirname .. path.basename(drop)) then
+    if fs.rename(drop, openfile .. path.basename(drop)) then
       if fs.isfile(path.notrailslash(drop) .. ".gif") then
-        fs.rename(path.notrailslash(drop) .. ".gif", dirname .. path.basename(drop) .. ".gif")
+        fs.rename(path.notrailslash(drop) .. ".gif", openfile .. path.basename(drop) .. ".gif")
       end
     else
-      sys.exec(_DRIVE .. "cmd/copy.lua", {drop, dirname})
+      sys.exec(_DRIVE .. "cmd/open.lua", {_DRIVE .. "cmd/copy.lua", drop, openfile})
       if fs.isfile(path.notrailslash(drop) .. ".gif") then
-        fs.write(dirname .. path.basename(drop) .. ".gif", fs.read(path.notrailslash(drop) .. ".gif"))
+        fs.write(openfile .. path.basename(drop) .. ".gif", fs.read(path.notrailslash(drop) .. ".gif"))
       end
     end
     return Icon:new(path.basename(drop), iconfor(drop))
@@ -46,25 +78,78 @@ function _init(args)
 end
 
 function _step(t)
-  win:step(t)
-  view.active(win.mainvp)
-  if input.hotkey() == "r" then
-    refresh()
+  if task then
+    if win then
+      win:step(t)
+      sys.writetochild(task, string.sub(input.text(), 1, 1))
+      log = log .. string.sub(input.text(), 1, 1)
+      input.text("")
+    end
+    log = log .. sys.readfromchild(task) .. sys.errorfromchild(task)
+    if log ~= "" or win then
+      createwindow()
+      local ww, wh = view.size(win.mainvp)
+      local iw, ih = image.size(backimg)
+      local tl = firstline(log)
+      local tw, th = text.draw(tl, win.font)
+      gfx.cls()
+      image.draw(backimg, 0, wh - ih - th, 0, 0, iw, ih)
+      tw, th = text.draw(tl, win.font, 0, wh - th)
+      if tw > ww then
+        while tw > ww do
+          tl = string.sub(tl, 1, #tl - 1)
+          tw, th = text.draw(tl, win.font, 0, wh - th)
+        end
+        if ww ~= iw or wh ~= ih then
+          image.forget(backimg)
+          backimg = image.new(ww, wh, 3)
+        end
+        image.copy(backimg, 0, 0, 0, 0, ww, wh)
+        log = string.sub(log, #tl + 1)
+      elseif tl ~= log then
+        if ww ~= iw or wh ~= ih then
+          image.forget(backimg)
+          backimg = image.new(ww, wh, 3)
+        end
+        image.copy(backimg, 0, 0, 0, 0, ww, wh)
+        log = string.sub(log, #tl + 2)
+      end
+    end
+    if not sys.childrunning(task) then
+      if win then
+        if not ended then
+          if sys.childexitcode(task) == 0 then
+            log = log .. "\n[Program ended successfully]"
+          else
+            log = log .. "\n[Program ended with error code " .. sys.childexitcode(task) .. "]"
+          end
+        end
+      else
+        sys.exit()
+      end
+      ended = true
+    end
+  elseif win then
+    win:step(t)
+    view.active(win.mainvp)
+    if input.hotkey() == "r" then
+      refresh()
+    end
+    if focused ~= view.focused(win.container) then
+      refresh()
+    end
+    focused = view.focused(win.container)
+    sys.stepinterval(sys.stepinterval() * -1)
   end
-  if focused ~= view.focused(win.container) then
-    refresh()
-  end
-  focused = view.focused(win.container)
-  sys.stepinterval(sys.stepinterval() * -1)
 end
 
 function refresh()
   local board = win.children["items"].children["items"]
-  local items = fs.list(dirname) or {}
+  local items = fs.list(openfile) or {}
   local iconsonly = listhasicons(items)
   table.sort(items)
   for i, item in ipairs(items) do
-    local filename = dirname .. item
+    local filename = openfile .. item
     local show = not iconsonly
     if fs.isfile(path.notrailslash(filename) .. ".gif") then
       show = true
@@ -94,23 +179,7 @@ end
 
 function onopen(icon)
   local filename = icon.drop
-  if fs.isdir(filename) then
-    sys.exec(_DRIVE .. "cmd/open.lua", {filename})
-  else
-    local ext = ""
-    if string.find(filename, "%.") then
-      ext = string.lower(string.sub(filename, 1 - string.find(string.reverse(filename), "%.")))
-    end
-    if ext == "lua" then
-      sys.exec(filename)
-    elseif ext == "gif" then
-      sys.exec(_DRIVE .. "cmd/show.lua", {filename})
-    elseif ext == "wav" then
-      sys.exec(_DRIVE .. "cmd/play.lua", {filename})
-    else
-      sys.exec(_DRIVE .. "cmd/edit.lua", {filename})
-    end
-  end
+  sys.exec(_DRIVE .. "cmd/open.lua", {filename})
 end
 
 function listhasicons(list)
@@ -150,4 +219,13 @@ function iconfor(filename)
     end
   end
   return _DRIVE .. "icons/file.gif"
+end
+
+function firstline(txt)
+  local nl = string.find(txt, "\n")
+  if nl then
+    return string.sub(txt, 1, nl - 1)
+  else
+    return txt
+  end
 end

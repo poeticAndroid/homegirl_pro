@@ -3,7 +3,7 @@ local win
 local _sec, _ms = 0, 0
 
 function _init()
-  win = Window:new("Clock", 16, 16, 160, 90)
+  win = Window:new("Clock", 456, 1, 160, 90)
   win:icon(_DIR .. _FILE .. ".gif")
   win.resizable = true
   win.onclose = function()

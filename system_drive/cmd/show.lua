@@ -11,7 +11,7 @@ function _init(args)
   view.visible(scrn.mainvp, false)
   view.active(scrn.rootvp)
   width, height = image.size(anim[1])
-  print(args[1] .. ": " .. width .. " x " .. height .. " pixels")
+  -- print(args[1] .. ": " .. width .. " x " .. height .. " pixels")
   scrnw, scrnh = view.size(scrn.rootvp)
   while width > scrnw do
     mode = mode + 5
