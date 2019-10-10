@@ -48,7 +48,6 @@ function createwindow()
   win.onclose = function()
     sys.exit()
   end
-  win:step(42)
   view.active(win.mainvp)
 end
 
@@ -56,6 +55,7 @@ function createdirwindow()
   createwindow()
   win:icon(_DRIVE .. "icons/dir.gif")
   view.size(win._resbtn, 11, 11)
+  win:step(42)
   local board = win:attach("items", UI.Scrollbox:new()):attach("items", Icon.Board:new())
   board.ondrop = function(self, drop)
     if not string.find(drop, "%:") then
@@ -145,7 +145,7 @@ end
 
 function refresh()
   local board = win.children["items"].children["items"]
-  local items = fs.list(openfile) or {}
+  local items = fs.list(openfile)
   local iconsonly = listhasicons(items)
   table.sort(items)
   for i, item in ipairs(items) do

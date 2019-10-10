@@ -15,12 +15,11 @@ function _init()
   spare = image.new(scrnw, scrnh, 4)
   font = text.loadfont("Victoria.8b")
 
-  scrn:palette(0, 0, 5, 10)
+  scrn:palette(0, 0, 0, 2)
   scrn:palette(1, 15, 15, 15)
-  scrn:palette(2, 0, 0, 2)
+  scrn:palette(2, 0, 5, 10)
   scrn:palette(3, 15, 8, 0)
 
-  -- out("Homegirl Shell\n")
   if sys.env("ENGINE_VERSION") then
     out("System version " .. sys.env("ENGINE_VERSION") .. "\n\n")
   end

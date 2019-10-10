@@ -2,7 +2,7 @@ local Screen, Icon, path = require("screen"), require("icon"), require("path")
 local scrn, desktop
 
 function _init()
-  scrn = Screen:new("Homegirl Workshop", 11, 2)
+  scrn = Screen:new((sys.env("ENGINE") or "System") .. " Workshop", 11, 2)
   scrn:palette(0, 10, 11, 12)
   scrn:palette(1, 0, 0, 0)
   scrn:palette(2, 15, 15, 15)
