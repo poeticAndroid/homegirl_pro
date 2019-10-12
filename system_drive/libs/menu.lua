@@ -75,7 +75,7 @@ do
     if not struct.vp then
       struct.vp = view.new(self.screen, ml, mt)
     end
-    ml,mt = view.position(struct.vp)
+    ml, mt = view.position(struct.vp)
     view.active(struct.vp)
     local tl = 0
     for i, menu in ipairs(struct.menu) do
@@ -99,11 +99,11 @@ do
     mh = mh + 2
     view.size(struct.vp, mw, mh)
     if not topmenu then
-      if ml+mw > sw then
-        ml,mt = 0,sh-mh-1
+      if ml + mw > sw then
+        ml, mt = 0, sh - mh - 1
       end
-      if mt+mh > sh then
-        mt = sh-mh-1
+      if mt + mh > sh then
+        mt = sh - mh - 1
       end
     end
     view.position(struct.vp, ml, mt)
@@ -189,11 +189,11 @@ do
     if top then
       return " " .. struct.label .. " "
     else
-      return (struct.checked and "* " or "  ") ..
+      return (struct.checked and " *" or "  ") ..
         struct.label .. (struct.menu and "  >" or (struct.hotkey and (" ^" .. struct.hotkey) or "   "))
     end
   end
-  
+
   function Menu:_gethotkeys(struct)
     if not struct then
       struct = self.struct
@@ -203,7 +203,7 @@ do
       self._hotkeys[struct.hotkey] = struct
     end
     if struct.menu then
-      for i,menu in ipairs(struct.menu) do
+      for i, menu in ipairs(struct.menu) do
         self:_gethotkeys(menu)
       end
     end

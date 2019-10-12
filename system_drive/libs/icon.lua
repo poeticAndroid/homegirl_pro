@@ -119,6 +119,16 @@ do
     self._row = self._row + ch + 2
   end
 
+  function Board:getselected()
+    local selected = {}
+    for name, child in pairs(self.children) do
+      if child.selected then
+        table.insert(selected, child.drop)
+      end
+    end
+    return selected
+  end
+
   function Board:step(time)
     local prevvp = view.active()
     view.active(self.container)

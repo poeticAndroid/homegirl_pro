@@ -1,5 +1,5 @@
-local Window, Icon, UI, path = require("window"), require("icon"), require("ui"), require("path")
-local win, openfile, focused, task, ended
+local Window, Menu, Icon, UI, path = require("window"), require("menu"), require("icon"), require("ui"), require("path")
+local win, openfile, task, ended, showall
 local log, logx, logy, backimg = "", 0, 0, image.new(8, 8, 3)
 
 function _init(args)
@@ -9,6 +9,7 @@ function _init(args)
     createdirwindow()
   else
     sys.stepinterval(64)
+    fs.cd(path.resolve(openfile .. "/.."))
     local ext = ""
     if string.find(openfile, "%.") then
       ext = string.lower(string.sub(openfile, 1 - string.find(string.reverse(openfile), "%.")))
@@ -56,6 +57,37 @@ function createdirwindow()
   win:icon(_DRIVE .. "icons/dir.gif")
   view.size(win._resbtn, 11, 11)
   win:step(42)
+  showall = not listhasicons(fs.list(openfile))
+  win:attach(
+    "menu",
+    Menu:new(
+      {
+        {
+          label = "Directory",
+          menu = {
+            {label = "Refresh", hotkey = "r", action = refresh},
+            {
+              label = "Show all files",
+              hotkey = "i",
+              checked = showall,
+              action = function(self)
+                showall = not showall
+                self.checked = showall
+                refresh()
+              end
+            }
+          }
+        },
+        {
+          label = "File",
+          menu = {
+            {label = "Open", hotkey = "o", action = openselected},
+            {label = "Edit", hotkey = "e", action = editselected}
+          }
+        }
+      }
+    )
+  )
   local board = win:attach("items", UI.Scrollbox:new()):attach("items", Icon.Board:new())
   board.ondrop = function(self, drop)
     if not string.find(drop, "%:") then
@@ -132,13 +164,6 @@ function _step(t)
   elseif win then
     win:step(t)
     view.active(win.mainvp)
-    if input.hotkey() == "r" then
-      refresh()
-    end
-    if focused ~= view.focused(win.container) then
-      refresh()
-    end
-    focused = view.focused(win.container)
     sys.stepinterval(sys.stepinterval() * -1)
   end
 end
@@ -146,7 +171,7 @@ end
 function refresh()
   local board = win.children["items"].children["items"]
   local items = fs.list(openfile)
-  local iconsonly = listhasicons(items)
+  local iconsonly = not showall
   table.sort(items)
   for i, item in ipairs(items) do
     local filename = openfile .. item
@@ -174,6 +199,22 @@ function refresh()
     if not items[item] then
       board:destroychild(item)
     end
+  end
+end
+
+function openselected()
+  local board = win.children["items"].children["items"]
+  local selected = board:getselected()
+  for i, name in ipairs(selected) do
+    sys.exec(_DRIVE .. "cmd/open.lua", {name})
+  end
+end
+
+function editselected()
+  local board = win.children["items"].children["items"]
+  local selected = board:getselected()
+  for i, name in ipairs(selected) do
+    sys.exec(_DRIVE .. "cmd/edit.lua", {name})
   end
 end
 

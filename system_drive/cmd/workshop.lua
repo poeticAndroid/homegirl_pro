@@ -1,4 +1,4 @@
-local Screen, Icon, path = require("screen"), require("icon"), require("path")
+local Screen, Icon, Menu, path = require("screen"), require("icon"), require("menu"), require("path")
 local scrn, desktop
 
 function _init()
@@ -11,6 +11,27 @@ function _init()
 
   desktop = scrn:attach("desktop", Icon.Board:new())
   desktop.backgroundimage = image.load(_DRIVE .. "stuff/homegirl_wallpaper.gif")[1]
+
+  scrn:attach(
+    "menu",
+    Menu:new(
+      {
+        {
+          label = "Desktop",
+          menu = {
+            {
+              label = "Clean up",
+              hotkey = "r",
+              action = function()
+                desktop:tidy()
+              end
+            }
+          }
+        },
+        {label = "Drives"}
+      }
+    )
+  )
 
   view.attribute(scrn.rootvp, "hide-enabled", "true")
   sys.stepinterval(-1)
