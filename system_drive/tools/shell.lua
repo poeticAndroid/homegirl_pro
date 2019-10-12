@@ -75,10 +75,6 @@ function _step()
   scrn:step()
 end
 
-function _shutdown()
-  print("terminal terminated!")
-end
-
 function submit(line)
   local cmd = ""
   local args = parsecmd(line)
