@@ -4,25 +4,23 @@ local Window = Widget:extend()
 do
   function Window:_new(title, left, top, width, height, parent)
     self.children = {}
-    self:attachto(parent, parent)
+    self:attachto(nil, parent, parent)
     self:size(width, height)
     self:position(left, top)
     self:title(title)
   end
 
-  function Window:attachto(vp, screen)
-    if self.parentvp ~= vp then
-      Widget.attachto(self, vp, screen)
-      self:title(self:title())
-      self:icon("sys:icons/lua.gif")
-      self.mainvp = view.new(self.container)
-      self._closebtn = view.new(self.container)
-      self._titlevp = view.new(self.container)
-      self._hidebtn = view.new(self.container)
-      self._resbtn = view.new(self.container, 8, 8, 8, 8)
-      view.active(self.mainvp)
-      self:redraw()
-    end
+  function Window:attachto(...)
+    Widget.attachto(self, ...)
+    self.mainvp = view.new(self.container)
+    self._closebtn = view.new(self.container)
+    self._titlevp = view.new(self.container)
+    self._hidebtn = view.new(self.container)
+    self._resbtn = view.new(self.container, 8, 8, 8, 8)
+    self:title(self:title())
+    self:icon("sys:icons/lua.gif")
+    view.active(self.mainvp)
+    self:redraw()
     if view.attribute(self.parentvp, "hide-enabled") == "true" then
       self.onhide = function(self)
         view.visible(self.container, false)

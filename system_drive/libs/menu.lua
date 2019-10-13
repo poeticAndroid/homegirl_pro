@@ -10,9 +10,10 @@ do
     self:_gethotkeys()
   end
 
-  function Menu:attachto(parentvp, screen)
-    self.parentvp = parentvp
-    self.screen = screen
+  function Menu:attachto(parent, parentvp, screen)
+    self.parent = parent
+    self.parentvp = parentvp or parent.mainvp or parent.container
+    self.screen = screen or parent.screen
   end
   function Menu:destroy()
     self:close()

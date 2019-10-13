@@ -8,7 +8,7 @@ do
   Widget.bgcolor = 0
   Widget.fgtextcolor = 1
   Widget.bgtextcolor = 1
-  Widget.parentvp = false
+  Widget.parent = false
   Widget.font = text.loadfont("Victoria.8b")
 
   function Widget:_new(label)
@@ -24,11 +24,20 @@ do
     else
       table.insert(self.children, child)
     end
-    child:attachto(self.mainvp or self.container, self.screen)
+    child:attachto(self)
     return child
   end
-  function Widget:attachto(vp, screen)
-    if self.parentvp ~= vp then
+  function Widget:attachto(parent, vp, screen)
+    if parent then
+      if not vp then
+        vp = parent.mainvp or parent.container
+      end
+      if not screen then
+        screen = parent.screen
+      end
+    end
+    if self.parent ~= parent then
+      self.parent = parent
       local l, t, w, h = 0, 0, 8, 8
       if self.container then
         l, t = view.position(self.container)
@@ -60,8 +69,17 @@ do
   end
   function Widget:destroychild(name)
     local child = self.children[name]
-    child:destroy()
-    self.children[name] = nil
+    if child then
+      child:destroy()
+      self.children[name] = nil
+    else
+      for n, child in pairs(self.children) do
+        if child == name then
+          child:destroy()
+          self.children[n] = nil
+        end
+      end
+    end
   end
 
   function Widget:position(left, top)

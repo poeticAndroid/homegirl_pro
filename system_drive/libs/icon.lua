@@ -82,7 +82,7 @@ do
       self:destroychild(name)
     end
     self.children[name] = child
-    child:attachto(self.container, self.screen)
+    child:attachto(self)
     self:tidychild(child)
     return child
   end
