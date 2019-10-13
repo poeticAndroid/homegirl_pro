@@ -39,7 +39,7 @@ do
     local prevvp = view.active()
     view.active(self.container)
     local mx, my, mb = input.mouse()
-    if mb > 0 then
+    if mb == 1 then
       if self.selected and self._dbltime > time then
         if self.onopen then
           self:onopen()
@@ -192,7 +192,7 @@ do
       end
       drop = input.drop()
     end
-    if self._draging and mb == 1 and (self._selx1 ~= mx or self._sely1 ~= my) then
+    if self._dragging and mb == 1 and (self._selx1 ~= mx or self._sely1 ~= my) then
       for name, child in pairs(self.children) do
         if child.selected then
           self._dirty = true
@@ -202,7 +202,7 @@ do
     end
     if not self._selecting and mb == 1 then
       self._selecting = true
-      self._draging = false
+      self._dragging = false
       self._selx1 = mx
       self._sely1 = my
       local clear = true
@@ -211,7 +211,7 @@ do
         local cw, ch = child:size()
         if self:aabb(mx, my, 0, 0, cx, cy, cw, ch) then
           self._selecting = false
-          self._draging = true
+          self._dragging = true
           if child.selected then
             clear = false
           end
@@ -242,7 +242,7 @@ do
       gfx.bar(x + w, y, 1, h)
       gfx.bar(x, y + h, w, 1)
     end
-    if (self._selecting or self._draging) and mb == 0 then
+    if (self._selecting or self._dragging) and mb == 0 then
       local x, y = math.min(self._selx1, self._selx2), math.min(self._sely1, self._sely2)
       local w, h = math.abs(self._selx1 - self._selx2), math.abs(self._sely1 - self._sely2)
       for name, child in pairs(self.children) do
@@ -253,7 +253,7 @@ do
         end
       end
       self._selecting = false
-      self._draging = false
+      self._dragging = false
     end
     for name, child in pairs(self.children) do
       child:step(time)
