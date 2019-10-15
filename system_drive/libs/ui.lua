@@ -1,5 +1,56 @@
 local Widget = require("widget")
 
+local Button = Widget:extend()
+do
+  function Button:_new(label)
+    self.label = label
+  end
+  function Button:step(t)
+    local prevvp = view.active()
+    local redraw
+    view.active(self.container)
+    local vw, vh = view.size(self.container)
+    local mx, my, mb = input.mouse()
+    if not self._pressed and mb == 1 then
+      redraw = true
+    end
+    if self._pressed and mb == 0 then
+      redraw = true
+      if self.onclick then
+        self:onclick()
+      end
+    end
+    self._pressed = mb == 1
+    if mx < 0 or my < 0 or mx >= vw or my >= vh then
+      self._pressed = false
+    end
+    if redraw then
+      self:redraw()
+    end
+    view.active(prevvp)
+  end
+  function Button:redraw()
+    local prevvp = view.active()
+    view.active(self.container)
+    local vw, vh = view.size(self.container)
+    local tw, th = text.draw(self.label, self.font)
+    if self._pressed then
+      gfx.bgcolor(self.fgcolor)
+      gfx.cls()
+      gfx.fgcolor(self.fgtextcolor)
+      text.draw(self.label, self.font, vw / 2 - tw / 2, vh / 2 - th / 2)
+      self:inset(0, 0, vw, vh)
+    else
+      gfx.bgcolor(self.bgcolor)
+      gfx.cls()
+      gfx.fgcolor(self.bgtextcolor)
+      text.draw(self.label, self.font, vw / 2 - tw / 2, vh / 2 - th / 2)
+      self:outset(0, 0, vw, vh)
+    end
+    view.active(prevvp)
+  end
+end
+
 local Scrollbox = Widget:extend()
 do
   function Scrollbox:_new()
@@ -69,7 +120,7 @@ do
     end
     local bw, bh, bp, bs
     local vw, vh = view.size(self.parentvp)
-    vw, vh = self:size(vw - self.barsize, vh - self.barsize)
+    vw, vh = view.size(self.container, vw - self.barsize, vh - self.barsize)
     if not self.child then
       return
     end
@@ -107,5 +158,6 @@ do
 end
 
 return {
+  Button = Button,
   Scrollbox = Scrollbox
 }

@@ -82,7 +82,8 @@ function createdirwindow()
           label = "File",
           menu = {
             {label = "Open", hotkey = "o", action = openselected},
-            {label = "Edit", hotkey = "e", action = editselected}
+            {label = "Edit", hotkey = "e", action = editselected},
+            {label = "Info", action = infoselected}
           }
         }
       }
@@ -209,12 +210,18 @@ function openselected()
     sys.exec(_DRIVE .. "cmd/open.lua", {name})
   end
 end
-
 function editselected()
   local board = win.children["items"].children["items"]
   local selected = board:getselected()
   for i, name in ipairs(selected) do
     sys.exec(_DRIVE .. "cmd/edit.lua", {name})
+  end
+end
+function infoselected()
+  local board = win.children["items"].children["items"]
+  local selected = board:getselected()
+  for i, name in ipairs(selected) do
+    sys.exec(_DRIVE .. "cmd/open.lua", {_DRIVE .. "cmd/fileinfo.lua", name})
   end
 end
 

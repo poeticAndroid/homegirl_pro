@@ -25,6 +25,7 @@ do
       table.insert(self.children, child)
     end
     child:attachto(self)
+    child:redraw()
     return child
   end
   function Widget:attachto(parent, vp, screen)
@@ -86,7 +87,9 @@ do
     return view.position(self.container, left, top)
   end
   function Widget:size(width, height)
-    return view.size(self.container, width, height)
+    local w,h = view.size(self.container, width, height)
+    self:redraw()
+    return w,h
   end
 
   function Widget:step(t)
@@ -95,6 +98,8 @@ do
         child:step(t)
       end
     end
+  end
+  function Widget:redraw()
   end
 
   function Widget:outset(x, y, w, h)
@@ -121,6 +126,9 @@ do
   end
 
   function Widget:gotclicked(vp)
+    if not vp then
+      vp = self.container
+    end
     local clicked = false
     local prevvp = view.active()
     view.active(vp)
