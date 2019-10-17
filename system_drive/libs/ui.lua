@@ -1,18 +1,36 @@
 local Widget = require("widget")
 
+local Label = Widget:extend()
+do
+  function Label:redraw()
+    local prevvp = view.active()
+    view.active(self.container)
+    gfx.bgcolor(self.bgcolor)
+    gfx.cls()
+    gfx.fgcolor(self.bgtextcolor)
+    text.draw(self.label, self.font, 0, 0)
+    view.active(prevvp)
+  end
+end
+
 local Button = Widget:extend()
 do
-  function Button:_new(label)
-    self.label = label
-  end
   function Button:step(t)
     local prevvp = view.active()
     local redraw
     view.active(self.container)
     local vw, vh = view.size(self.container)
     local mx, my, mb = input.mouse()
+    if mx < 0 or my < 0 or mx >= vw or my >= vh then
+      redraw = true
+      self._pressed = false
+      mb = 0
+    end
     if not self._pressed and mb == 1 then
       redraw = true
+      if self.onpress then
+        self:onpress()
+      end
     end
     if self._pressed and mb == 0 then
       redraw = true
@@ -21,9 +39,6 @@ do
       end
     end
     self._pressed = mb == 1
-    if mx < 0 or my < 0 or mx >= vw or my >= vh then
-      self._pressed = false
-    end
     if redraw then
       self:redraw()
     end
@@ -48,6 +63,145 @@ do
       self:outset(0, 0, vw, vh)
     end
     view.active(prevvp)
+  end
+end
+
+local TextInput = Widget:extend()
+do
+  function TextInput:_new(content)
+    self.content = content or ""
+    self.cursor = #(self.content)
+    self.selectedbytes = 0
+    self.scrollx, self.scrolly = 0, 0
+    self.border = 2
+  end
+
+  function TextInput:step(t)
+    local prevvp = view.active()
+    view.active(self.container)
+    local mx, my, mb = input.mouse()
+    local redraw = mb == 1 or self._selecting
+    local drop = input.drop()
+    if drop then
+      input.selected(drop)
+    end
+    local txt = input.text()
+    local pos, sel = input.cursor()
+    if self.content ~= txt or self.cursor ~= pos or self.selectedbytes ~= sel then
+      redraw = true
+      self.content = txt
+      self.cursor = pos
+      self.selectedbytes = sel
+    end
+    if redraw then
+      self:redraw()
+    end
+    view.active(prevvp)
+  end
+
+  function TextInput:setcontent(txt)
+    local prevvp = view.active()
+    local redraw
+    view.active(self.container)
+    if self.content ~= txt then
+      redraw = true
+      self.content = input.text(txt)
+    end
+    if redraw then
+      self:redraw()
+    end
+    view.active(prevvp)
+  end
+
+  function TextInput:redraw()
+    local prevvp = view.active()
+    view.active(self.container)
+    local vw, vh = view.size(self.container)
+    local mx, my, mb = input.mouse()
+    gfx.bgcolor(self.bgcolor)
+    gfx.cls()
+    local margin = self.scrollx
+    local x, y, tw, th = self.border - margin, self.border - self.scrolly, 8, 8
+    local pos, sel = self.cursor, self.selectedbytes
+    local lines = self:_getlines(self.content)
+    for i, line in ipairs(lines) do
+      gfx.fgcolor(self.bgtextcolor)
+      tw, th = text.draw(string.sub(line, 1, math.max(0, pos)), self.font, x, y)
+      x = x + tw
+      if pos >= 0 and pos <= #line and (y < self.border or x < self.border) then
+        self.cursor = self.cursor + 1
+        self.scrollx = math.min(self.scrollx, self.scrollx + x - self.border)
+        self.scrolly = math.min(self.scrolly, self.scrolly + y - self.border)
+      end
+      tw, th = text.draw(string.sub(line, 1 + math.max(0, pos), math.max(0, pos + sel)), self.font, x, y)
+      gfx.fgcolor(self.fgcolor)
+      if sel == 0 and pos >= 0 and pos <= #line then
+        gfx.bar(x - 1, y, 2, th)
+      elseif pos + sel > #line and pos <= #line then
+        gfx.bar(x, y, vw + self.scrollx, th)
+      else
+        gfx.bar(x, y, tw, th)
+      end
+      gfx.fgcolor(self.fgtextcolor)
+      tw, th = text.draw(string.sub(line, 1 + math.max(0, pos), math.max(0, pos + sel)), self.font, x, y)
+      x = x + tw
+      if pos + sel >= 0 and pos + sel <= #line and (y + th > vh or x + 8 > vw) then
+        self.cursor = self.cursor - 1
+        self.scrollx = math.max(self.scrollx, self.scrollx + x - vw + 8)
+        self.scrolly = math.max(self.scrolly, self.scrolly + y - vh + th + self.border)
+      end
+      gfx.fgcolor(self.bgtextcolor)
+      tw, th = text.draw(string.sub(line, 1 + math.max(0, pos + sel)), self.font, x, y)
+
+      if mb == 1 and my >= y then
+        local ls = self.cursor - pos
+        local p = #line + 1
+        tw = vw + self.scrollx
+        while mx < tw + self.border - 2 - self.scrollx and p > 0 do
+          p = p - 1
+          tw, th = text.draw(string.sub(line, 1, p), self.font, x, vh)
+        end
+        p = p + ls
+        if self._selecting then
+          if p > self._selecting then
+            input.cursor(self._selecting, p - self._selecting)
+          else
+            input.cursor(p, self._selecting - p)
+          end
+        else
+          input.cursor(p)
+        end
+      end
+
+      pos = pos - #line - 1
+      y = y + th
+      x = self.border - margin
+    end
+    input.linesperpage(math.floor((vh - self.border * 2) / th))
+    if not self._selecting and mb == 1 then
+      self._selecting = input.cursor()
+    end
+    if mb == 0 then
+      self._selecting = nil
+    end
+    if self.border > 0 then
+      self:outset(0, 0, vw, vh)
+    end
+    local b = math.min(1, self.border - 1)
+    self:inset(b, b, vw - b * 2, vh - b * 2)
+    view.active(prevvp)
+  end
+
+  function TextInput:_getlines(txt)
+    local lines = {}
+    local s, e = 1, string.find(txt, "\n")
+    while e do
+      table.insert(lines, string.sub(txt, s, e - 1))
+      s = e + 1
+      e = string.find(txt, "\n", s)
+    end
+    table.insert(lines, string.sub(txt, s))
+    return lines
   end
 end
 
@@ -158,6 +312,8 @@ do
 end
 
 return {
+  Label = Label,
   Button = Button,
+  TextInput = TextInput,
   Scrollbox = Scrollbox
 }

@@ -87,9 +87,9 @@ do
     return view.position(self.container, left, top)
   end
   function Widget:size(width, height)
-    local w,h = view.size(self.container, width, height)
+    local w, h = view.size(self.container, width, height)
     self:redraw()
-    return w,h
+    return w, h
   end
 
   function Widget:step(t)
