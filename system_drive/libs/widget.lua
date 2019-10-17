@@ -30,10 +30,10 @@ do
   end
   function Widget:attachto(parent, vp, screen)
     if parent then
-      if not vp then
+      if vp == nil then
         vp = parent.mainvp or parent.container
       end
-      if not screen then
+      if screen == nil then
         screen = parent.screen
       end
     end
@@ -90,6 +90,13 @@ do
     local w, h = view.size(self.container, width, height)
     self:redraw()
     return w, h
+  end
+  function Widget:autosize()
+    return self:size(16, 9)
+  end
+  function Widget:focus()
+    view.focused(self.mainvp or self.container, true)
+    self:redraw()
   end
 
   function Widget:step(t)

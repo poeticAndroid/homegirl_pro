@@ -11,6 +11,14 @@ do
     text.draw(self.label, self.font, 0, 0)
     view.active(prevvp)
   end
+
+  function Label:autosize()
+    local prevvp = view.active()
+    view.active(self.container)
+    local tw, th = text.draw(self.label, self.font, view.size(view.active()))
+    view.active(prevvp)
+    return self:size(tw, th)
+  end
 end
 
 local Button = Widget:extend()
@@ -64,6 +72,13 @@ do
     end
     view.active(prevvp)
   end
+  function Button:autosize()
+    local prevvp = view.active()
+    view.active(self.container)
+    local tw, th = text.draw(self.label, self.font, view.size(view.active()))
+    view.active(prevvp)
+    return self:size(tw + th * 2, th + th * 0.75)
+  end
 end
 
 local TextInput = Widget:extend()
@@ -76,26 +91,52 @@ do
     self.border = 2
   end
 
+  function TextInput:attachto(...)
+    Widget.attachto(self, ...)
+    local txt = self.content
+    self.content = ""
+    self:setcontent(txt)
+  end
+
   function TextInput:step(t)
     local prevvp = view.active()
     view.active(self.container)
     local mx, my, mb = input.mouse()
-    local redraw = mb == 1 or self._selecting
+    local redraw = mb == 1 or self._selecting or self._focused ~= view.focused(self.container)
     local drop = input.drop()
     if drop then
       input.selected(drop)
     end
     local txt = input.text()
+    if not self.multiline then
+      local i = string.find(txt, "\n")
+      if i then
+        while i do
+          txt = string.sub(txt, 1, i - 1) .. string.sub(txt, i + 1)
+          i = string.find(txt, "\n")
+        end
+        txt = input.text(txt)
+        if self.onenter then
+          self:onenter(txt)
+        end
+      end
+    end
     local pos, sel = input.cursor()
     if self.content ~= txt or self.cursor ~= pos or self.selectedbytes ~= sel then
       redraw = true
-      self.content = txt
       self.cursor = pos
       self.selectedbytes = sel
+      if self.content ~= txt then
+        self.content = txt
+        if self.onchange then
+          self:onchange()
+        end
+      end
     end
     if redraw then
       self:redraw()
     end
+    self._focused = view.focused(self.container)
     view.active(prevvp)
   end
 
@@ -111,6 +152,19 @@ do
       self:redraw()
     end
     view.active(prevvp)
+  end
+
+  function TextInput:size(w, h)
+    self.scrollx, self.scrolly = 0, 0
+    return Widget.size(self, w, h)
+  end
+
+  function TextInput:autosize()
+    local prevvp = view.active()
+    view.active(self.container)
+    local tw, th = text.draw(self.content, self.font, view.size(self.container))
+    view.active(prevvp)
+    return self:size(tw + self.border * 2, th + self.border * 2)
   end
 
   function TextInput:redraw()
@@ -135,12 +189,14 @@ do
       end
       tw, th = text.draw(string.sub(line, 1 + math.max(0, pos), math.max(0, pos + sel)), self.font, x, y)
       gfx.fgcolor(self.fgcolor)
-      if sel == 0 and pos >= 0 and pos <= #line then
-        gfx.bar(x - 1, y, 2, th)
-      elseif pos + sel > #line and pos <= #line then
-        gfx.bar(x, y, vw + self.scrollx, th)
-      else
-        gfx.bar(x, y, tw, th)
+      if view.focused(self.container) then
+        if sel == 0 and pos >= 0 and pos <= #line then
+          gfx.bar(x - 1, y, 2, th)
+        elseif pos + sel > #line and pos <= #line then
+          gfx.bar(x, y, vw + self.scrollx, th)
+        else
+          gfx.bar(x, y, tw, th)
+        end
       end
       gfx.fgcolor(self.fgtextcolor)
       tw, th = text.draw(string.sub(line, 1 + math.max(0, pos), math.max(0, pos + sel)), self.font, x, y)
@@ -177,7 +233,7 @@ do
       y = y + th
       x = self.border - margin
     end
-    input.linesperpage(math.floor((vh - self.border * 2) / th))
+    input.linesperpage(math.floor((vh - self.border * 2) / th) - 1)
     if not self._selecting and mb == 1 then
       self._selecting = input.cursor()
     end
