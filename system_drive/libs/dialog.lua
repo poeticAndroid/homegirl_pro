@@ -79,10 +79,16 @@ do
 
   function Choice:step(t)
     Window.step(self, t)
+    local prevvp = view.active()
+    view.active(self.container)
+    if input.hotkey() == "\x1b" then
+      self._action = self.options[1].action
+    end
     if self._action ~= nil then
       self.parent:destroychild(self)
       self:_action()
     end
+    view.active(prevvp)
   end
 end
 
@@ -141,7 +147,7 @@ do
         end
       },
       {
-        label = "Okay",
+        label = "Confirm",
         action = function(self)
           if self.ondone then
             self:ondone(self.result)

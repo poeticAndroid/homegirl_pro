@@ -1,4 +1,10 @@
-local Screen, Icon, Menu, path = require("screen"), require("icon"), require("menu"), require("path")
+local Screen, Icon, Menu, Dia, path, sysver =
+  require("screen"),
+  require("icon"),
+  require("menu"),
+  require("dialog"),
+  require("path"),
+  require("sysver")
 local scrn, desktop
 
 function _init()
@@ -25,10 +31,13 @@ function _init()
               action = function()
                 desktop:tidy()
               end
+            },
+            {
+              label = "About..",
+              action = about
             }
           }
-        },
-        {label = "Drives"}
+        } --,        {label = "Drives"}
       }
     )
   )
@@ -111,4 +120,17 @@ function iconfor(filename)
     end
   end
   return _DRIVE .. "icons/file.gif"
+end
+
+function about()
+  scrn:attach(
+    "dia",
+    Dia.Alert:new(
+      "About Workshop",
+      "Workshop " ..
+        sysver ..
+          " by poeticAndroid\n\n Running on " ..
+            (sys.env("ENGINE") or "System") .. " " .. (sys.env("ENGINE_VERSION") or "")
+    )
+  )
 end

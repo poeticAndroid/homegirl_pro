@@ -42,7 +42,7 @@ do
         end
       else
         self:close()
-        if self._prevstepint and sys.stepinterval() == -2 then
+        if self._prevstepint and math.abs(sys.stepinterval()) == 2 then
           sys.stepinterval(self._prevstepint)
         end
       end

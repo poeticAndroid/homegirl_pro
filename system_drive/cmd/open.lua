@@ -1,4 +1,10 @@
-local Window, Menu, Icon, UI, path = require("window"), require("menu"), require("icon"), require("ui"), require("path")
+local Window, Menu, Icon, Dia, UI, path =
+  require("window"),
+  require("menu"),
+  require("icon"),
+  require("dialog"),
+  require("ui"),
+  require("path")
 local win, openfile, task, ended, showall
 local log, logx, logy, backimg = "", 0, 0, image.new(8, 8, 3)
 
@@ -6,6 +12,7 @@ function _init(args)
   openfile = path.notrailslash(path.resolve(fs.cd(), table.remove(args, 1)))
   if fs.isdir(openfile) then
     openfile = path.trailslash(openfile)
+    fs.cd(openfile)
     createdirwindow()
   else
     sys.stepinterval(64)
@@ -65,6 +72,13 @@ function createdirwindow()
         {
           label = "Directory",
           menu = {
+            {
+              label = "New",
+              menu = {
+                {label = "File..", hotkey = "f", action = newfile},
+                {label = "Directory..", hotkey = "d", action = newdir}
+              }
+            },
             {label = "Refresh", hotkey = "r", action = refresh},
             {
               label = "Show all files",
@@ -79,11 +93,14 @@ function createdirwindow()
           }
         },
         {
-          label = "File",
+          label = "Item(s)",
           menu = {
             {label = "Open", hotkey = "o", action = openselected},
             {label = "Edit", hotkey = "e", action = editselected},
-            {label = "Info", action = infoselected}
+            {label = "Rename..", hotkey = "n", action = renameselected},
+            {label = "Info", action = infoselected},
+            {label = "Kill..", action = killselected},
+            {label = "Delete..", action = deleteselected}
           }
         }
       }
@@ -203,6 +220,31 @@ function refresh()
   end
 end
 
+function newfile()
+  local prompt = win:attach("dia", Dia.Prompt:new("New file..", "What would you like to name your file?"))
+  prompt.ondone = function(self, name)
+    if name then
+      fs.write(name, "")
+      if not showall then
+        fs.write(name .. ".gif", fs.read(iconfor(name)))
+      end
+    end
+    refresh()
+  end
+end
+function newdir()
+  local prompt = win:attach("dia", Dia.Prompt:new("New directory..", "What would you like to name your directory?"))
+  prompt.ondone = function(self, name)
+    if name then
+      fs.mkdir(name)
+      if not showall then
+        fs.write(name .. ".gif", fs.read(iconfor(name)))
+      end
+    end
+    refresh()
+  end
+end
+
 function openselected()
   local board = win.children["items"].children["items"]
   local selected = board:getselected()
@@ -217,11 +259,71 @@ function editselected()
     sys.exec(_DRIVE .. "cmd/edit.lua", {name})
   end
 end
+function renameselected()
+  local board = win.children["items"].children["items"]
+  local selected = board:getselected()
+  if #selected > 0 then
+    name = path.notrailslash(selected[1])
+    local prompt =
+      win:attach(
+      "dia",
+      Dia.Prompt:new("Rename item..", "What would you like to rename the item to?", path.basename(name))
+    )
+    prompt.ondone = function(self, newname)
+      if newname then
+        fs.rename(name, newname)
+        fs.rename(name .. ".gif", newname .. ".gif")
+      end
+      refresh()
+    end
+  end
+end
 function infoselected()
   local board = win.children["items"].children["items"]
   local selected = board:getselected()
   for i, name in ipairs(selected) do
     sys.exec(_DRIVE .. "cmd/open.lua", {_DRIVE .. "cmd/fileinfo.lua", name})
+  end
+end
+function deleteselected()
+  local board = win.children["items"].children["items"]
+  local selected = board:getselected()
+  local confirm =
+    win:attach(
+    "dia",
+    Dia.Confirm:new("Delete item(s)?", "Do you really wish to delete\nthe " .. (#selected) .. " selected item(s)?")
+  )
+  confirm.ondone = function(self, yes)
+    if yes then
+      for i, name in ipairs(selected) do
+        name = path.notrailslash(name)
+        fs.delete(name)
+        fs.delete(name .. ".gif")
+      end
+    end
+    refresh()
+  end
+end
+function killselected()
+  local board = win.children["items"].children["items"]
+  local selected = board:getselected()
+  local confirm =
+    win:attach(
+    "dia",
+    Dia.Confirm:new(
+      "Kill program(s)?",
+      "Do you really wish to kill all running\ninstances of the " .. (#selected) .. " selected program(s)?"
+    )
+  )
+  confirm.ondone = function(self, yes)
+    if yes then
+      local kills = 0
+      for i, name in ipairs(selected) do
+        kills = kills + sys.killall(name)
+      end
+      win:attach("dia", Dia.Alert:new("Program(s) killed", "Number of instances killed: " .. kills))
+    end
+    refresh()
   end
 end
 
