@@ -1,8 +1,9 @@
-local Screen, Icon, Menu, Dia, path, sysver =
+local Screen, Icon, Menu, Dia, UI, path, sysver =
   require("screen"),
   require("icon"),
   require("menu"),
   require("dialog"),
+  require("ui"),
   require("path"),
   require("sysver")
 local scrn, desktop
@@ -37,7 +38,11 @@ function _init()
               action = about
             }
           }
-        } --,        {label = "Drives"}
+        },
+        {
+          label = "Drive(s)",
+          menu = {{label = "Mount remote..", action = mountremote}, {label = "Unmount..", action = unmountselected}}
+        }
       }
     )
   )
@@ -130,7 +135,59 @@ function about()
       "Workshop " ..
         sysver ..
           " by poeticAndroid\n\n Running on " ..
-            (sys.env("ENGINE") or "System") .. " " .. (sys.env("ENGINE_VERSION") or "")
+            (sys.env("ENGINE") or "<Unknown system>") .. " " .. (sys.env("ENGINE_VERSION") or "")
     )
   )
+end
+
+function filterdrives(tbl)
+  local out = {}
+  for i, name in ipairs(tbl) do
+    if string.find(name, "%:") then
+      table.insert(out, name)
+    end
+  end
+  return out
+end
+
+function unmountselected()
+  local selected = filterdrives(desktop:getselected())
+  local confirm =
+    scrn:attach(
+    "dia",
+    Dia.Confirm:new("Unmount drives(s)?", "Do you really wish to unmount\nthe " .. (#selected) .. " selected drive(s)?")
+  )
+  confirm.ondone = function(self, yes)
+    if yes then
+      for i, name in ipairs(selected) do
+        if not fs.unmount(name) then
+          confirm =
+            scrn:attach(
+            "dia",
+            Dia.Confirm:new("Force unmount drives(s)?", name .. " drive seems to be in use.\nUnmount it by force?")
+          )
+          confirm.ondone = function(self, yes)
+            if yes then
+              fs.unmount(name, true)
+            end
+          end
+        end
+      end
+    end
+  end
+end
+
+function mountremote()
+  local mountdia =
+    scrn:attach(
+    "dia",
+    Dia.Prompt:new("Mount remote drive", "Please enter name and URL of\nthe drive you wish to mount:", "http://")
+  )
+  -- local urlinp = mountdia:attach("urlinp", UI.TextInput:new("http://"))
+  local driveinp = mountdia:attach("driveinp", UI.TextInput:new("net:"))
+  mountdia.ondone = function(self, url)
+    if url and driveinp.content ~= "" then
+      fs.mount(driveinp.content, url)
+    end
+  end
 end

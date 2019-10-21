@@ -63,10 +63,11 @@ do
     child = Window.attach(self, name, child)
     local cw, ch = child:autosize()
     local vw, vh = view.size(self.mainvp)
-    for i, option in ipairs(self.options) do
-      local btn = self.children["button_" .. i]
-      local bl, bt = btn:position()
-      btn:position(bl, bt + ch + 4)
+    for _name, _child in pairs(self.children) do
+      if _name ~= "message" then
+        local bl, bt = _child:position()
+        _child:position(bl, bt + ch + 4)
+      end
     end
     local msg = self.children["message"]
     local mw, mh = msg:size()
