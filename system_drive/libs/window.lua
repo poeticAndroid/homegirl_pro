@@ -146,6 +146,17 @@ do
     local maxl = sw - bw * 2
     local mint = 0
     local maxt = sh - bh
+    local thres = 16
+    if l >= 0 and t >= 0 and l <= sw - ww and t <= sh - wh then
+      self._snapped = false
+    end
+    if l < -thres or t < -thres or l > sw - ww + thres or t > sh - wh + thres then
+      self._snapped = true
+    end
+    if not self._snapped then
+      minl, mint = 0, 0
+      maxl, maxt = sw - ww, sh - wh
+    end
     if wh > sh then
       maxl = sw - ww
       maxt = sh - wh
@@ -168,12 +179,25 @@ do
     if not h then
       w, h = view.size(self.container)
     end
+    local wl, wt = view.position(self.container)
+    local sw, sh = view.size(self.parentvp)
     local bw, bh = view.size(self._closebtn)
-    if w < bw * 2 then
-      w = bw * 2
+    local minw, minh = bw * 2, bh * 2
+    local maxw, maxh = 640, 480
+    if not self._snapped then
+      maxw, maxh = sw - wl, sh - wt
     end
-    if h < bh * 2 then
-      h = bh * 2
+    if w < minw then
+      w = minw
+    end
+    if h < minh then
+      h = minh
+    end
+    if w > maxw then
+      w = maxw
+    end
+    if h > maxh then
+      h = maxh
     end
     return Widget.size(self, w, h)
   end

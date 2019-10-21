@@ -155,16 +155,16 @@ do
   end
 
   function TextInput:size(w, h)
-    self.scrollx, self.scrolly = 0, 0
     return Widget.size(self, w, h)
   end
 
   function TextInput:autosize()
+    self.scrollx, self.scrolly = 0, 0
     local prevvp = view.active()
     view.active(self.container)
     local tw, th = text.draw(self.content, self.font, view.size(self.container))
     view.active(prevvp)
-    return self:size(tw + self.border * 2, th + self.border * 2)
+    return self:size(tw + 8 + self.border * 2, th + self.border * 2)
   end
 
   function TextInput:redraw()
@@ -209,7 +209,7 @@ do
       gfx.fgcolor(self.bgtextcolor)
       tw, th = text.draw(string.sub(line, 1 + math.max(0, pos + sel)), self.font, x, y)
 
-      if mb == 1 and my >= y then
+      if mb == 1 and my >= y and my < y + th then
         local ls = self.cursor - pos
         local p = #line + 1
         tw = vw + self.scrollx
