@@ -2,7 +2,7 @@ local Widget = require("widget")
 
 local Icon = Widget:extend()
 do
-  function Icon:_new(label, iconfile)
+  function Icon:constructor(label, iconfile)
     self.label = label
     self.icon = image.load(iconfile)
     if not self.icon then
@@ -73,7 +73,7 @@ end
 
 local Board = Widget:extend()
 do
-  function Board:_new()
+  function Board:constructor()
     self.children = {}
   end
   function Board:attach(name, child)

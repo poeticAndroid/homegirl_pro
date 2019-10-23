@@ -2,7 +2,7 @@ local Widget = require("widget")
 
 local Menu = Widget:extend()
 do
-  function Menu:_new(struct)
+  function Menu:constructor(struct)
     self.struct = {
       menu = struct
     }

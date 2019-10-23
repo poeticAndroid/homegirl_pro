@@ -83,7 +83,7 @@ end
 
 local TextInput = Widget:extend()
 do
-  function TextInput:_new(content)
+  function TextInput:constructor(content)
     self.content = content or ""
     self.cursor = #(self.content)
     self.selectedbytes = 0
@@ -263,7 +263,7 @@ end
 
 local Scrollbox = Widget:extend()
 do
-  function Scrollbox:_new()
+  function Scrollbox:constructor()
     self.children = {}
     self.barsize = 8
   end

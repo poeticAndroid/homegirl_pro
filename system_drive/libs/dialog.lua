@@ -2,7 +2,7 @@ local Window, ui = require("window"), require("ui")
 
 local Choice = Window:extend()
 do
-  function Choice:_new(title, message, options)
+  function Choice:constructor(title, message, options)
     if not options then
       options = {
         {
@@ -95,7 +95,7 @@ end
 
 local Alert = Choice:extend()
 do
-  function Alert:_new(title, message)
+  function Alert:constructor(title, message)
     options = {
       {
         label = "Okay",
@@ -112,7 +112,7 @@ end
 
 local Confirm = Choice:extend()
 do
-  function Confirm:_new(title, message)
+  function Confirm:constructor(title, message)
     options = {
       {
         label = "No",
@@ -137,7 +137,7 @@ end
 
 local Prompt = Choice:extend()
 do
-  function Prompt:_new(title, message, defaultvalue)
+  function Prompt:constructor(title, message, defaultvalue)
     options = {
       {
         label = "Cancel",

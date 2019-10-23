@@ -2,7 +2,7 @@ local Widget = require("widget")
 
 local Window = Widget:extend()
 do
-  function Window:_new(title, left, top, width, height, parent)
+  function Window:constructor(title, left, top, width, height, parent)
     self.children = {}
     self:attachto(nil, parent, parent)
     self:size(width, height)
