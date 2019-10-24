@@ -15,7 +15,7 @@ do
     end
     self.message = message
     self.options = options
-    Window._new(self, title, 8, 8, 320, 80)
+    Window.constructor(self, title, 8, 8, 320, 80)
   end
 
   function Choice:attachto(parent, vp, screen)
@@ -106,7 +106,7 @@ do
         end
       }
     }
-    Choice._new(self, title, message, options)
+    Choice.constructor(self, title, message, options)
   end
 end
 
@@ -131,7 +131,7 @@ do
         end
       }
     }
-    Choice._new(self, title, message, options)
+    Choice.constructor(self, title, message, options)
   end
 end
 
@@ -157,7 +157,7 @@ do
       }
     }
     self.result = defaultvalue or ""
-    Choice._new(self, title, message, options)
+    Choice.constructor(self, title, message, options)
   end
 
   function Prompt:attachto(parent, vp, screen)

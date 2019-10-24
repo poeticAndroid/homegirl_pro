@@ -70,11 +70,14 @@ function _step(t)
     local title = view.attribute(vp, "title")
     local iconname = view.attribute(vp, "icon")
     local hidden = not view.visible(vp)
-    if hidden and title and iconname then
+    if hidden and title then
       seen["vp" .. vp] = true
     end
     if seen["vp" .. vp] then
       if not desktop.children["vp" .. vp] then
+        if not iconname or iconname == "" then
+          iconname = iconfor(view.owner(vp))
+        end
         desktop:attach("vp" .. vp, Icon:new(title, iconname)).onopen = unhide
       else
         desktop.children["vp" .. vp].label = title

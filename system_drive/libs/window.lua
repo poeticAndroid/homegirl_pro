@@ -18,7 +18,6 @@ do
     self._hidebtn = view.new(self.container)
     self._resbtn = view.new(self.container, 8, 8, 8, 8)
     self:title(self:title())
-    self:icon("sys:icons/lua.gif")
     view.active(self.mainvp)
     self:redraw()
     if view.attribute(self.parentvp, "hide-enabled") == "true" then
