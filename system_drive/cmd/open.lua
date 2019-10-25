@@ -80,6 +80,7 @@ function createdirwindow()
               }
             },
             {label = "Refresh", hotkey = "r", action = refresh},
+            {label = "Open shell here", hotkey = "s", action = shellhere},
             {
               label = "Show all files",
               hotkey = "i",
@@ -107,6 +108,9 @@ function createdirwindow()
     )
   )
   local board = win:attach("items", UI.Scrollbox:new()):attach("items", Icon.Board:new())
+  if fs.isfile(openfile .. "_background.gif") then
+    board.backgroundimage = image.load(openfile .. "_background.gif")[1]
+  end
   board.ondrop = function(self, drop)
     if not string.find(drop, "%:") then
       return nil
@@ -197,7 +201,7 @@ function refresh()
     if fs.isfile(path.notrailslash(filename) .. ".gif") then
       show = true
     end
-    if string.sub(filename, -11) == ":_drive.gif" then
+    if string.sub(filename, -11) == ":_drive.gif" or item == "_background.gif" then
       show = false
     end
     if
@@ -243,6 +247,10 @@ function newdir()
     end
     refresh()
   end
+end
+
+function shellhere()
+  sys.exec(_DRIVE .. "tools/shell.lua", {}, openfile)
 end
 
 function openselected()

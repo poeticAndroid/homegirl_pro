@@ -17,7 +17,11 @@ function _init()
   scrn:colors(2, 1)
 
   desktop = scrn:attach("desktop", Icon.Board:new())
-  desktop.backgroundimage = image.load(_DRIVE .. "stuff/homegirl_wallpaper.gif")[1]
+  if fs.isfile("user:wallpaper.gif") then
+    desktop.backgroundimage = image.load("user:wallpaper.gif")[1]
+  else
+    desktop.backgroundimage = image.load(_DRIVE .. "stuff/homegirl_wallpaper.gif")[1]
+  end
 
   scrn:attach(
     "menu",
@@ -41,7 +45,10 @@ function _init()
         },
         {
           label = "Drive(s)",
-          menu = {{label = "Mount remote..", action = mountremote}, {label = "Unmount..", action = unmountselected}}
+          menu = {
+            {label = "Mount remote..", action = mountremote},
+            {label = "Unmount..", action = unmountselected}
+          }
         }
       }
     )
