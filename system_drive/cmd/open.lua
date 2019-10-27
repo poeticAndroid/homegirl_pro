@@ -6,7 +6,7 @@ local Window, Menu, Icon, Dia, UI, path =
   require("ui"),
   require("path")
 local win, openfile, task, ended, showall
-local log, logx, logy, backimg = "", 0, 0, image.new(8, 8, 3)
+local _log, log, logx, logy, backimg, logvp = "", "", 0, 0, image.new(8, 8, 3)
 
 function _init(args)
   openfile = path.notrailslash(path.resolve(fs.cd(), table.remove(args, 1)))
@@ -15,7 +15,7 @@ function _init(args)
     fs.cd(openfile)
     createdirwindow()
   else
-    sys.stepinterval(64)
+    sys.stepinterval(1)
     fs.cd(path.resolve(openfile .. "/.."))
     local ext = ""
     if string.find(openfile, "%.") then
@@ -135,38 +135,55 @@ function _step(t)
   if task then
     if win then
       win:step(t)
+      local sw, sh = view.size(false)
+      local ww, wh = view.size(win.mainvp)
+      view.position(logvp, 0, wh - sh)
       sys.writetochild(task, string.sub(input.text(), 1, 1))
       log = log .. string.sub(input.text(), 1, 1)
       input.text("")
     end
     log = log .. sys.readfromchild(task) .. sys.errorfromchild(task)
-    if log ~= "" or win then
-      createwindow()
+    if sys.stepinterval() < 64 then
+      sys.stepinterval(sys.stepinterval() + 1)
+    end
+    while log ~= _log do
+      _log = log
+      sys.stepinterval(1)
+      local sw, sh = view.size(false)
+      if not win then
+        createwindow()
+        logvp = view.new(win.mainvp, 0, 0, sw, sh)
+        view.active(logvp)
+      end
       local ww, wh = view.size(win.mainvp)
       local iw, ih = image.size(backimg)
       local tl = firstline(log)
       local tw, th = text.draw(tl, win.font)
       gfx.cls()
-      image.draw(backimg, 0, wh - ih - th, 0, 0, iw, ih)
-      tw, th = text.draw(tl, win.font, 0, wh - th)
+      image.draw(backimg, 0, sh - ih - th, 0, 0, iw, ih)
+      tw, th = text.draw(tl, win.font, 0, sh)
       if tw > ww then
         while tw > ww do
           tl = string.sub(tl, 1, #tl - 1)
-          tw, th = text.draw(tl, win.font, 0, wh - th)
+          tw, th = text.draw(tl, win.font, 0, sh)
         end
-        if ww ~= iw or wh ~= ih then
+        tw, th = text.draw(tl, win.font, 0, sh - th)
+        if sw ~= iw or sh ~= ih then
           image.forget(backimg)
-          backimg = image.new(ww, wh, 3)
+          backimg = image.new(sw, sh, 3)
         end
-        image.copy(backimg, 0, 0, 0, 0, ww, wh)
+        image.copy(backimg, 0, 0, 0, 0, sw, sh)
         log = string.sub(log, #tl + 1)
       elseif tl ~= log then
-        if ww ~= iw or wh ~= ih then
+        tw, th = text.draw(tl, win.font, 0, sh - th)
+        if sw ~= iw or sh ~= ih then
           image.forget(backimg)
-          backimg = image.new(ww, wh, 3)
+          backimg = image.new(sw, sh, 3)
         end
-        image.copy(backimg, 0, 0, 0, 0, ww, wh)
+        image.copy(backimg, 0, 0, 0, 0, sw, sh)
         log = string.sub(log, #tl + 2)
+      else
+        tw, th = text.draw(tl, win.font, 0, sh - th)
       end
     end
     if not sys.childrunning(task) then
