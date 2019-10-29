@@ -143,8 +143,12 @@ function _step(t)
       input.text("")
     end
     log = log .. sys.readfromchild(task) .. sys.errorfromchild(task)
-    if sys.stepinterval() < 64 then
-      sys.stepinterval(sys.stepinterval() + 1)
+    local stpint = sys.stepinterval()
+    if not ended and stpint < 128 then
+      sys.stepinterval(stpint + 1)
+    end
+    if ended and stpint >= 0 then
+      sys.stepinterval(stpint - 1)
     end
     while log ~= _log do
       _log = log
