@@ -9,6 +9,9 @@ do
     self.frame = 1
     self.position = Vector2:new()
     self.velocity = Vector2:new(0, 0)
+    self.momentum = 1
+    self.bounce = 0.5
+    self.friction = 0
     for name, val in pairs(properties) do
       if type(self[name]) == "function" then
         self[name](val)
@@ -27,6 +30,8 @@ do
   end
 
   function Actor:step(t)
+    self.velocity:add(self.scene.gravity)
+    self.velocity:multiply(self.momentum)
     self.position:add(self.velocity)
   end
   function Actor:draw(t)

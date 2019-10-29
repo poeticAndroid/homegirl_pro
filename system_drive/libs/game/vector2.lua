@@ -62,5 +62,20 @@ do
     result.y = self.y * y
     return result
   end
+
+  function Vector2:magnitude(mag)
+    local _mag = math.sqrt(self.x * self.x + self.y * self.y)
+    if mag then
+      if _mag == 0 then
+        self.y = -1
+        _mag = 1
+      end
+      local k = mag / _mag
+      self.x = self.x * k
+      self.y = self.y * k
+      _mag = mag
+    end
+    return _mag
+  end
 end
 return Vector2

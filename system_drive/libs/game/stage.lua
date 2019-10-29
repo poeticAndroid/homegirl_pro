@@ -6,9 +6,10 @@ do
   function Stage:constructor(game, scene)
     self.game = game
     self.scene = scene
-    self.camera = Vector2:new(0, 0)
   end
   function Stage:reset()
+    self.camera = Vector2:new(self.scene.camera)
+    self.gravity = Vector2:new(self.scene.gravity)
     self.actors = {}
     if self.scene.palette then
       image.usepalette(self.game.costumes[self.scene.palette][1])
