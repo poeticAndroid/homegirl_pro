@@ -48,16 +48,16 @@ do
           self.sounds[string.sub(file, 1, -5)] = audio.load(self.gamedir .. "sounds/" .. file)
           print("  " .. file)
         end
-      elseif not self.actors then
-        self.actors = {actor = require(_DIR .. "actor")}
-        self._assets.actors = fs.list(self.gamedir .. "actors/")
-        if self._assets.actors and #(self._assets.actors) > 0 then
-          print("Loading actors...")
+      elseif not self.roles then
+        self.roles = {role = require(_DIR .. "role")}
+        self._assets.roles = fs.list(self.gamedir .. "roles/")
+        if self._assets.roles and #(self._assets.roles) > 0 then
+          print("Loading roles...")
         end
-      elseif self._assets.actors and #(self._assets.actors) > 0 then
-        local file = table.remove(self._assets.actors)
+      elseif self._assets.roles and #(self._assets.roles) > 0 then
+        local file = table.remove(self._assets.roles)
         if string.sub(file, -4) == ".lua" then
-          self.actors[string.sub(file, 1, -5)] = require(self.gamedir .. "actors/" .. file)
+          self.roles[string.sub(file, 1, -5)] = require(self.gamedir .. "roles/" .. file)
           print("  " .. file)
         end
       elseif not self.stages then

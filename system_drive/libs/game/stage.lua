@@ -44,9 +44,9 @@ do
   end
 
   function Stage:addactor(obj)
-    local actor = self.game.actors[obj.type or "actor"]:new(self, obj)
-    self.actorsbytag[actor.type or "actor"] = self.actorsbytag[actor.type or "actor"] or {}
-    table.insert(self.actorsbytag[actor.type or "actor"], actor)
+    local actor = self.game.roles[obj.role or "role"]:new(self, obj)
+    self.actorsbytag[actor.role or "role"] = self.actorsbytag[actor.role or "role"] or {}
+    table.insert(self.actorsbytag[actor.role or "role"], actor)
     if actor.tags then
       for i, tag in ipairs(actor.tags) do
         self.actorsbytag[tag] = self.actorsbytag[tag] or {}
@@ -65,7 +65,7 @@ do
       end
     else
       self:removeactor(actor, self.actors)
-      self:removeactor(actor, self.actorsbytag[actor.type or "actor"])
+      self:removeactor(actor, self.actorsbytag[actor.role or "role"])
       if actor.tags then
         for i, tag in ipairs(actor.tags) do
           self:removeactor(actor, self.actorsbytag[tag])
