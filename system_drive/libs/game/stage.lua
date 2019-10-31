@@ -10,6 +10,7 @@ do
   function Stage:reset()
     self.camera = Vector2:new(self.scene.camera)
     self.gravity = Vector2:new(self.scene.gravity)
+    self.actorsbytag = {}
     self.actors = {}
     if self.scene.palette then
       image.usepalette(self.game.costumes[self.scene.palette][1])
@@ -18,7 +19,7 @@ do
       gfx.bgcolor(self.scene.bgcolor)
     end
     for i, actor in ipairs(self.scene.actors) do
-      table.insert(self.actors, self.game.actors[actor.type or "actor"]:new(self, actor))
+      self:addactor(actor)
     end
   end
 
@@ -40,6 +41,37 @@ do
     self:reset()
   end
   function Stage:exit()
+  end
+
+  function Stage:addactor(obj)
+    local actor = self.game.actors[obj.type or "actor"]:new(self, obj)
+    self.actorsbytag[actor.type or "actor"] = self.actorsbytag[actor.type or "actor"] or {}
+    table.insert(self.actorsbytag[actor.type or "actor"], actor)
+    if actor.tags then
+      for i, tag in ipairs(actor.tags) do
+        self.actorsbytag[tag] = self.actorsbytag[tag] or {}
+        table.insert(self.actorsbytag[tag], actor)
+      end
+    end
+    table.insert(self.actors, actor)
+    return actor
+  end
+  function Stage:removeactor(actor, from)
+    if from then
+      for i, val in ipairs(from) do
+        if val == actor then
+          table.remove(from, i)
+        end
+      end
+    else
+      self:removeactor(actor, self.actors)
+      self:removeactor(actor, self.actorsbytag[actor.type or "actor"])
+      if actor.tags then
+        for i, tag in ipairs(actor.tags) do
+          self:removeactor(actor, self.actorsbytag[tag])
+        end
+      end
+    end
   end
 end
 return Stage
