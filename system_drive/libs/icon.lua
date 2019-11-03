@@ -149,13 +149,15 @@ do
       child.drop = "" .. name
       local cx, cy = child:position()
       local cw, ch = child:size()
+      view.active(child.container)
       if self.backgroundimage then
-        view.active(child.container)
         image.copymode(0)
         image.draw(self.backgroundimage, 0, 0, cx, cy, cw, ch)
-        image.copymode(1)
-        child:redraw()
+      else
+        gfx.cls()
       end
+      image.copymode(1)
+      child:redraw()
       if vw < cx + cw then
         vw = cx + cw
       end
