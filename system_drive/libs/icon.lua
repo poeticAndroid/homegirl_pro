@@ -142,9 +142,6 @@ do
     end
     gfx.cls()
     local vw, vh = self:size()
-    if self.backgroundimage then
-      image.draw(self.backgroundimage, 0, 0, 0, 0, vw, vh)
-    end
     for name, child in pairs(self.children) do
       child.drop = "" .. name
       local cx, cy = child:position()
@@ -167,6 +164,9 @@ do
     end
     view.active(self.container)
     self:size(vw, vh)
+    if self.backgroundimage then
+      image.draw(self.backgroundimage, 0, 0, 0, 0, vw, vh)
+    end
     local mx, my, mb = input.mouse()
     local drop = input.drop()
     while drop do
