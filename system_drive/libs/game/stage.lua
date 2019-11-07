@@ -6,6 +6,7 @@ do
   function Stage:constructor(game, scene)
     self.game = game
     self.scene = scene
+    self._destroyedactors = {}
   end
   function Stage:reset()
     self.camera = Vector2:new(self.scene.camera)
@@ -26,6 +27,15 @@ do
   function Stage:step(t)
     for i, actor in ipairs(self.actors) do
       actor:step(t)
+      if actor.destroyed then
+        table.insert(self._destroyedactors, addactor)
+      elseif i > 1 and actor.z < self.actors[i - 1].z then
+        self.actors[i] = self.actors[i - 1]
+        self.actors[i - 1] = actor
+      end
+    end
+    while #(self._destroyedactors) > 0 do
+      self:removeactor(table.remove(self._destroyedactors))
     end
   end
   function Stage:draw(t)
@@ -69,6 +79,25 @@ do
       if actor.tags then
         for i, tag in ipairs(actor.tags) do
           self:removeactor(actor, self.actorsbytag[tag])
+        end
+      end
+    end
+  end
+
+  function onoverlap(a, b, resolver)
+    if not (a and b and resolver) then
+      return
+    end
+    if a.scene then
+      a = {a}
+    end
+    if b.scene then
+      b = {b}
+    end
+    for i1, actor1 in ipairs(a) do
+      for i2, actor2 in ipairs(b) do
+        if (actor1 ~= actor2 and actor1.overlapswith(actor2)) then
+          resolver(actor1, actor2)
         end
       end
     end

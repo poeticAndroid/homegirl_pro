@@ -8,12 +8,14 @@ do
     self.game = scene.game
     self.frame = 1
     self.shape = "aabb"
+    self.scale = Vector2:new(1, 1)
     self.position = Vector2:new()
     self.velocity = Vector2:new(0, 0)
     self.gravity = Vector2:new(0, 0)
     self.momentum = 1
     self.bounce = 0.5
     self.friction = 0
+    self.z = 0
     for name, val in pairs(properties) do
       if type(self[name]) == "function" then
         self[name](val)
@@ -28,7 +30,7 @@ do
     if type(self.costume) == "string" then
       self:changecostume(self.costume)
     end
-    self._screenpos = Vector2:new()
+    self.screenpos = Vector2:new()
   end
 
   function Role:step(t)
@@ -47,10 +49,28 @@ do
     end
   end
   function Role:draw(t)
-    self._screenpos:set(self.game.size):multiply(.5):add(self.position):subtract(self.anchor):subtract(
-      self.scene.camera
+    self.screenpos:set(self.game.size):multiply(0.5):subtract(self.scene.camera):add(self.position)
+    if not self._nextframe then
+      self._nextframe = t + image.duration(self.costume[self.frame])
+    end
+    if t >= self._nextframe then
+      self.frame = self.frame + 1
+      if self.frame > #(self.costume) then
+        self.frame = 1
+      end
+      self._nextframe = self._nextframe + image.duration(self.costume[self.frame])
+    end
+    image.draw(
+      self.costume[self.frame],
+      self.screenpos.x - self.anchor.x * self.scale.x,
+      self.screenpos.y - self.anchor.y * self.scale.y,
+      0,
+      0,
+      self.size.x * self.scale.x,
+      self.size.y * self.scale.y,
+      self.size.x,
+      self.size.y
     )
-    image.draw(self.costume[self.frame], self._screenpos.x, self._screenpos.y, 0, 0, self.size:get())
   end
 
   function Role:changecostume(name)
@@ -58,6 +78,9 @@ do
     self.size = Vector2:new(image.size(self.costume[self.frame]))
     self.anchor = self.size:multiply(.5, .5, self.anchor or Vector2:new())
     self.frame = 1
+  end
+  function destroy()
+    self.destroyed = true
   end
 
   function Role:left(left)
@@ -111,6 +134,36 @@ do
         actor.bottom(),
         actor.right()
       )
+    end
+  end
+  function Role:snaptoedge(obstruction, overlap)
+    local x, y, l = 0, math.maxinteger
+    if self.shape == "circle" then
+      x = self.position.x - obstruction.position.x
+      y = self.position.y - obstruction.position.y
+      l = math.sqrt(math.pow(x, 2) + math.pow(y, 2))
+      l = l / (self.radius() + obstruction.radius() - overlap)
+      x = x / l
+      y = y / l
+      self.position.set(obstruction.position.get()).add(x or 0, y or 0)
+    else
+      if (math.abs(x + y) > math.abs(obstruction.right() - self.left())) then
+        x = obstruction.right() - self.left() - overlap
+        y = 0
+      end
+      if (math.abs(x + y) > math.abs(obstruction.left() - self.right())) then
+        x = obstruction.left() - self.right() + overlap
+        y = 0
+      end
+      if (math.abs(x + y) > math.abs(obstruction.bottom() - self.top())) then
+        x = 0
+        y = obstruction.bottom() - self.top() - overlap
+      end
+      if (math.abs(x + y) > math.abs(obstruction.top() - self.bottom())) then
+        x = 0
+        y = obstruction.top() - self.bottom() + overlap
+      end
+      self.position.add(x, y)
     end
   end
 
