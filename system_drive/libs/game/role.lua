@@ -37,49 +37,83 @@ do
     if self.momentum > 0 then
       self.velocity:add(self.scene.gravity):add(self.gravity)
       if self.friction > 0 then
-        local mag = self.velocity.magnitude()
+        local mag = self.velocity:magnitude()
         if mag > self.friction then
-          self.velocity.magnitude(mag - self.friction)
+          self.velocity:magnitude(mag - self.friction)
         else
-          self.velocity.set(0, 0)
+          self.velocity:set(0, 0)
         end
       end
       self.velocity:multiply(self.momentum)
       self.position:add(self.velocity)
     end
+    if self.ttl then
+      self.ttl = self.ttl - 1
+      if self.ttl == 0 then
+        self:destroy()
+      end
+    end
+  end
+  function Role:deadstep(t)
+    Role.step(self, t)
   end
   function Role:draw(t)
     self.screenpos:set(self.game.size):multiply(0.5):subtract(self.scene.camera):add(self.position)
-    if not self._nextframe then
-      self._nextframe = t + image.duration(self.costume[self.frame])
-    end
-    if t >= self._nextframe then
-      self.frame = self.frame + 1
-      if self.frame > #(self.costume) then
-        self.frame = 1
+    if self.costume then
+      if not self._nextframe then
+        self._nextframe = t + image.duration(self.costume[self.frame])
       end
-      self._nextframe = self._nextframe + image.duration(self.costume[self.frame])
+      if t >= self._nextframe and self.animatecostume then
+        self.frame = self.frame + 1
+        if self.frame > #(self.costume) then
+          if self.finalcostume then
+            self:destroy()
+          end
+          if self.loopcostume then
+            self.frame = 1
+          else
+            self.frame = #(self.costume)
+          end
+        end
+        self._nextframe = self._nextframe + image.duration(self.costume[self.frame])
+      end
+      image.draw(
+        self.costume[self.frame],
+        self.screenpos.x - self.anchor.x * self.scale.x,
+        self.screenpos.y - self.anchor.y * self.scale.y,
+        0,
+        0,
+        self.size.x * self.scale.x,
+        self.size.y * self.scale.y,
+        self.size.x,
+        self.size.y
+      )
     end
-    image.draw(
-      self.costume[self.frame],
-      self.screenpos.x - self.anchor.x * self.scale.x,
-      self.screenpos.y - self.anchor.y * self.scale.y,
-      0,
-      0,
-      self.size.x * self.scale.x,
-      self.size.y * self.scale.y,
-      self.size.x,
-      self.size.y
-    )
   end
 
-  function Role:changecostume(name)
+  function Role:changecostume(name, animate, loop, destroy)
+    if animate == nil then
+      animate = true
+    end
+    if loop == nil then
+      loop = true
+    end
+    self.animatecostume = animate
+    self.loopcostume = loop
+    self.finalcostume = destroy
     self.costume = self.game.costumes[name]
     self.size = Vector2:new(image.size(self.costume[self.frame]))
     self.anchor = self.size:multiply(.5, .5, self.anchor or Vector2:new())
     self.frame = 1
+    self._nextframe = nil
   end
-  function destroy()
+  function Role:kill()
+    self.dead = true
+  end
+  function Role:revive()
+    self.dead = false
+  end
+  function Role:destroy()
     self.destroyed = true
   end
 
@@ -125,14 +159,14 @@ do
       )
     else
       return self:_overlap2D(
-        self.top(),
-        self.left(),
-        self.bottom(),
-        self.right(),
-        actor.top(),
-        actor.left(),
-        actor.bottom(),
-        actor.right()
+        self:top(),
+        self:left(),
+        self:bottom(),
+        self:right(),
+        actor:top(),
+        actor:left(),
+        actor:bottom(),
+        actor:right()
       )
     end
   end
@@ -147,21 +181,21 @@ do
       y = y / l
       self.position.set(obstruction.position.get()).add(x or 0, y or 0)
     else
-      if (math.abs(x + y) > math.abs(obstruction.right() - self.left())) then
-        x = obstruction.right() - self.left() - overlap
+      if (math.abs(x + y) > math.abs(obstruction:right() - self:left())) then
+        x = obstruction:right() - self:left() - overlap
         y = 0
       end
-      if (math.abs(x + y) > math.abs(obstruction.left() - self.right())) then
-        x = obstruction.left() - self.right() + overlap
+      if (math.abs(x + y) > math.abs(obstruction:left() - self:right())) then
+        x = obstruction:left() - self:right() + overlap
         y = 0
       end
-      if (math.abs(x + y) > math.abs(obstruction.bottom() - self.top())) then
+      if (math.abs(x + y) > math.abs(obstruction:bottom() - self:top())) then
         x = 0
-        y = obstruction.bottom() - self.top() - overlap
+        y = obstruction:bottom() - self:top() - overlap
       end
-      if (math.abs(x + y) > math.abs(obstruction.top() - self.bottom())) then
+      if (math.abs(x + y) > math.abs(obstruction:top() - self:bottom())) then
         x = 0
-        y = obstruction.top() - self.bottom() + overlap
+        y = obstruction:top() - self:bottom() + overlap
       end
       self.position.add(x, y)
     end

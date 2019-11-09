@@ -26,9 +26,13 @@ do
 
   function Stage:step(t)
     for i, actor in ipairs(self.actors) do
-      actor:step(t)
+      if actor.dead then
+        actor:deadstep(t)
+      else
+        actor:step(t)
+      end
       if actor.destroyed then
-        table.insert(self._destroyedactors, addactor)
+        table.insert(self._destroyedactors, actor)
       elseif i > 1 and actor.z < self.actors[i - 1].z then
         self.actors[i] = self.actors[i - 1]
         self.actors[i - 1] = actor
@@ -84,7 +88,7 @@ do
     end
   end
 
-  function onoverlap(a, b, resolver)
+  function Stage:onoverlap(a, b, resolver, includedead)
     if not (a and b and resolver) then
       return
     end
@@ -95,9 +99,13 @@ do
       b = {b}
     end
     for i1, actor1 in ipairs(a) do
-      for i2, actor2 in ipairs(b) do
-        if (actor1 ~= actor2 and actor1.overlapswith(actor2)) then
-          resolver(actor1, actor2)
+      if includedead or not actor1.dead then
+        for i2, actor2 in ipairs(b) do
+          if includedead or not actor2.dead then
+            if (actor1 ~= actor2 and actor1:overlapswith(actor2)) then
+              resolver(actor1, actor2)
+            end
+          end
         end
       end
     end

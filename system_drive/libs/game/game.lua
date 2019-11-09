@@ -8,11 +8,19 @@ do
     self.screenmode = mode
     self.colorbits = colorbits
     self.targetfps = fps
+    self.gamepads = {
+      self:_newgamepad(),
+      self:_newgamepad()
+    }
+    self.gamepads[0] = self:_newgamepad()
     sys.stepinterval(0)
   end
 
   function Game:step(t)
     if self.scene then
+      for i, pad in pairs(self.gamepads) do
+        self:_handlegamepad(i)
+      end
       self.scene:step(t)
       self.scene:draw(t)
       if input.hotkey() == "\x1b" then
@@ -49,7 +57,7 @@ do
           print("  " .. file)
         end
       elseif not self.roles then
-        self.roles = {role = require(_DIR .. "role")}
+        self.roles = {role = require(_DIR .. "role"), text = require(_DIR .. "textrole")}
         self._assets.roles = fs.list(self.gamedir .. "roles/")
         if self._assets.roles and #(self._assets.roles) > 0 then
           print("Loading roles...")
@@ -95,7 +103,7 @@ do
     self.screen = view.newscreen(self.screenmode, self.colorbits)
     self.size = Vector2:new(view.size(self.screen))
     image.copymode(1)
-    self:framerate(self.targetfps or 60)
+    self:framerate(self.targetfps or 50)
     self:changescene("start")
   end
 
@@ -117,6 +125,77 @@ do
       sys.stepinterval(1000 / fps)
     end
     return self.targetfps
+  end
+
+  function Game:_newgamepad()
+    return {
+      delta = {
+        dir = Vector2:new(),
+        a = 0,
+        b = 0,
+        x = 0,
+        y = 0
+      },
+      dir = Vector2:new(),
+      _dir = Vector2:new(),
+      a = 0,
+      _a = 0,
+      b = 0,
+      _b = 0,
+      x = 0,
+      _x = 0,
+      y = 0,
+      _y = 0
+    }
+  end
+  function Game:_handlegamepad(player)
+    local gamepad = input.gamepad(player)
+    -- player = player + 1
+    self.gamepads[player].dir:set(0, 0)
+    if gamepad & 1 > 0 then
+      self.gamepads[player].dir:add(1, 0)
+    end
+    if gamepad & 2 > 0 then
+      self.gamepads[player].dir:add(-1, 0)
+    end
+    if gamepad & 4 > 0 then
+      self.gamepads[player].dir:add(0, -1)
+    end
+    if gamepad & 8 > 0 then
+      self.gamepads[player].dir:add(0, 1)
+    end
+    if gamepad & 16 > 0 then
+      self.gamepads[player].a = 1
+    else
+      self.gamepads[player].a = 0
+    end
+    if gamepad & 32 > 0 then
+      self.gamepads[player].b = 1
+    else
+      self.gamepads[player].b = 0
+    end
+    if gamepad & 64 > 0 then
+      self.gamepads[player].x = 1
+    else
+      self.gamepads[player].x = 0
+    end
+    if gamepad & 128 > 0 then
+      self.gamepads[player].y = 1
+    else
+      self.gamepads[player].y = 0
+    end
+
+    self.gamepads[player].delta.dir:set(self.gamepads[player].dir):subtract(self.gamepads[player]._dir)
+    self.gamepads[player].delta.a = self.gamepads[player].a - self.gamepads[player]._a
+    self.gamepads[player].delta.b = self.gamepads[player].b - self.gamepads[player]._b
+    self.gamepads[player].delta.x = self.gamepads[player].x - self.gamepads[player]._x
+    self.gamepads[player].delta.y = self.gamepads[player].y - self.gamepads[player]._y
+
+    self.gamepads[player]._dir:set(self.gamepads[player].dir:get())
+    self.gamepads[player]._a = self.gamepads[player].a
+    self.gamepads[player]._b = self.gamepads[player].b
+    self.gamepads[player]._x = self.gamepads[player].x
+    self.gamepads[player]._y = self.gamepads[player].y
   end
 end
 return Game
