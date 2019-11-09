@@ -24,7 +24,7 @@ function _init()
   if fs.isfile("user:wallpaper.gif") then
     desktop.backgroundimage = image.load("user:wallpaper.gif")[1]
   else
-    desktop.backgroundimage = image.load(_DRIVE .. "stuff/homegirl_wallpaper.gif")[1]
+    desktop.backgroundimage = image.load(_DRIVE .. "stuff/homegirl_wallpaper11.gif")[1]
   end
 
   scrn:attach(
