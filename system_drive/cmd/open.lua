@@ -99,9 +99,10 @@ function createdirwindow()
             {label = "Open", hotkey = "o", action = openselected},
             {label = "Edit", hotkey = "e", action = editselected},
             {label = "Rename..", hotkey = "n", action = renameselected},
+            {label = "Duplicate", hotkey = "c", action = duplicateselected},
+            {label = "Delete..", action = deleteselected},
             {label = "Info", action = infoselected},
-            {label = "Kill..", action = killselected},
-            {label = "Delete..", action = deleteselected}
+            {label = "Kill..", action = killselected}
           }
         }
       }
@@ -312,6 +313,18 @@ function infoselected()
   local selected = board:getselected()
   for i, name in ipairs(selected) do
     sys.exec(_DRIVE .. "cmd/open.lua", {_DRIVE .. "cmd/fileinfo.lua", name})
+  end
+end
+function duplicateselected()
+  local board = win.children["items"].children["items"]
+  local selected = board:getselected()
+  for i, name in ipairs(selected) do
+    name = path.notrailslash(name)
+    sys.exec(_DRIVE .. "cmd/open.lua", {_DRIVE .. "cmd/copy.lua", name, name .. "_copy"})
+    if fs.isfile(name .. ".gif") then
+      fs.write(name .. "_copy.gif", fs.read(name .. ".gif"))
+    end
+    board:attach(name .. "_copy", Icon:new(path.basename(name .. "_copy"), iconfor(name))).onopen = onopen
   end
 end
 function deleteselected()
