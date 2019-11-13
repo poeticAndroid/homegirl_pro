@@ -5,7 +5,7 @@ local Role = Object:extend()
 do
   function Role:constructor(scene, properties)
     self.scene = scene
-    self.game = scene.game
+    self.play = scene.play
     self.frame = 1
     self.shape = "aabb"
     self.scale = Vector2:new(1, 1)
@@ -58,7 +58,7 @@ do
     Role.step(self, t)
   end
   function Role:draw(t)
-    self.screenpos:set(self.game.size):multiply(0.5):subtract(self.scene.camera):add(self.position)
+    self.screenpos:set(self.play.size):multiply(0.5):subtract(self.scene.camera):add(self.position)
     if self.costume then
       if not self._nextframe then
         self._nextframe = t + image.duration(self.costume[self.frame])
@@ -101,7 +101,7 @@ do
     self.animatecostume = animate
     self.loopcostume = loop
     self.finalcostume = destroy
-    self.costume = self.game.costumes[name]
+    self.costume = self.play.costumes[name]
     self.size = Vector2:new(image.size(self.costume[self.frame]))
     self.anchor = self.size:multiply(.5, .5, self.anchor or Vector2:new())
     self.frame = 1

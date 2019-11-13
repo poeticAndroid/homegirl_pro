@@ -12,7 +12,7 @@ do
       fonts[self.font] = text.loadfont(self.font)
     end
     if not self.anchor then
-      self.size = Vector2:new(text.draw(self.text, fonts[self.font], self.game.size.x, self.game.size.y))
+      self.size = Vector2:new(text.draw(self.text, fonts[self.font], self.play.size.x, self.play.size.y))
       self.anchor = self.size:multiply(.5, .5, self.anchor or Vector2:new())
     end
     self.size:set(
