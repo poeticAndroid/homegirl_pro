@@ -1,5 +1,5 @@
 return {
-  Play = require(_DIR .. "game/play"),
+  Game = require(_DIR .. "game/game"),
   Stage = require(_DIR .. "game/stage"),
   Role = require(_DIR .. "game/role"),
   TextRole = require(_DIR .. "game/textrole"),

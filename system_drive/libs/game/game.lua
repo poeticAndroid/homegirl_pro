@@ -1,10 +1,10 @@
 local Object = require("object")
 local Vector2 = require(_DIR .. "vector2")
 
-local Play = Object:extend()
+local Game = Object:extend()
 do
-  function Play:constructor(dir, mode, colorbits, fps)
-    self.playdir = dir
+  function Game:constructor(dir, mode, colorbits, fps)
+    self.gamedir = dir
     self.screenmode = mode
     self.colorbits = colorbits
     self.targetfps = fps
@@ -16,7 +16,7 @@ do
     sys.stepinterval(0)
   end
 
-  function Play:step(t)
+  function Game:step(t)
     if self.scene then
       for i, pad in pairs(self.gamepads) do
         self:_handlegamepad(i)
@@ -34,62 +34,62 @@ do
       self._assets = self._assets or {}
       if not self.costumes then
         self.costumes = {}
-        self._assets.costumes = fs.list(self.playdir .. "costumes/")
+        self._assets.costumes = fs.list(self.gamedir .. "costumes/")
         if self._assets.costumes and #(self._assets.costumes) > 0 then
           print("Loading costumes...")
         end
       elseif self._assets.costumes and #(self._assets.costumes) > 0 then
         local file = table.remove(self._assets.costumes)
         if string.sub(file, -4) == ".gif" then
-          self.costumes[string.sub(file, 1, -5)] = image.load(self.playdir .. "costumes/" .. file)
+          self.costumes[string.sub(file, 1, -5)] = image.load(self.gamedir .. "costumes/" .. file)
           print("  " .. file)
         end
       elseif not self.sounds then
         self.sounds = {}
-        self._assets.sounds = fs.list(self.playdir .. "sounds/")
+        self._assets.sounds = fs.list(self.gamedir .. "sounds/")
         if self._assets.sounds and #(self._assets.sounds) > 0 then
           print("Loading sounds...")
         end
       elseif self._assets.sounds and #(self._assets.sounds) > 0 then
         local file = table.remove(self._assets.sounds)
         if string.sub(file, -4) == ".wav" then
-          self.sounds[string.sub(file, 1, -5)] = audio.load(self.playdir .. "sounds/" .. file)
+          self.sounds[string.sub(file, 1, -5)] = audio.load(self.gamedir .. "sounds/" .. file)
           print("  " .. file)
         end
       elseif not self.roles then
         self.roles = {role = require(_DIR .. "role"), text = require(_DIR .. "textrole")}
-        self._assets.roles = fs.list(self.playdir .. "roles/")
+        self._assets.roles = fs.list(self.gamedir .. "roles/")
         if self._assets.roles and #(self._assets.roles) > 0 then
           print("Loading roles...")
         end
       elseif self._assets.roles and #(self._assets.roles) > 0 then
         local file = table.remove(self._assets.roles)
         if string.sub(file, -4) == ".lua" then
-          self.roles[string.sub(file, 1, -5)] = require(self.playdir .. "roles/" .. file)
+          self.roles[string.sub(file, 1, -5)] = require(self.gamedir .. "roles/" .. file)
           print("  " .. file)
         end
       elseif not self.stages then
         self.stages = {stage = require(_DIR .. "stage")}
-        self._assets.stages = fs.list(self.playdir .. "stages/")
+        self._assets.stages = fs.list(self.gamedir .. "stages/")
         if self._assets.stages and #(self._assets.stages) > 0 then
           print("Loading stages...")
         end
       elseif self._assets.stages and #(self._assets.stages) > 0 then
         local file = table.remove(self._assets.stages)
         if string.sub(file, -4) == ".lua" then
-          self.stages[string.sub(file, 1, -5)] = require(self.playdir .. "stages/" .. file)
+          self.stages[string.sub(file, 1, -5)] = require(self.gamedir .. "stages/" .. file)
           print("  " .. file)
         end
       elseif not self.scenes then
         self.scenes = {}
-        self._assets.scenes = fs.list(self.playdir .. "scenes/")
+        self._assets.scenes = fs.list(self.gamedir .. "scenes/")
         if self._assets.scenes and #(self._assets.scenes) > 0 then
           print("Loading scenes...")
         end
       elseif self._assets.scenes and #(self._assets.scenes) > 0 then
         local file = table.remove(self._assets.scenes)
         if string.sub(file, -4) == ".lua" then
-          local scene = require(self.playdir .. "scenes/" .. file)
+          local scene = require(self.gamedir .. "scenes/" .. file)
           self.scenes[string.sub(file, 1, -5)] = self.stages[scene.stage or "stage"]:new(self, scene)
           print("  " .. file)
         end
@@ -99,7 +99,7 @@ do
     end
   end
 
-  function Play:start()
+  function Game:start()
     self.screen = view.newscreen(self.screenmode, self.colorbits)
     self.size = Vector2:new(view.size(self.screen))
     image.copymode(1)
@@ -107,7 +107,7 @@ do
     self:changescene("start")
   end
 
-  function Play:changescene(scenename)
+  function Game:changescene(scenename)
     if not self.scenes[scenename] then
       print("Scene '" .. scenename .. "' not found!")
       return sys.exit(404)
@@ -119,7 +119,7 @@ do
     self.scene:enter()
   end
 
-  function Play:framerate(fps)
+  function Game:framerate(fps)
     if fps then
       self.targetfps = fps
       sys.stepinterval(1000 / fps)
@@ -127,7 +127,7 @@ do
     return self.targetfps
   end
 
-  function Play:_newgamepad()
+  function Game:_newgamepad()
     return {
       delta = {
         dir = Vector2:new(),
@@ -148,7 +148,7 @@ do
       _y = 0
     }
   end
-  function Play:_handlegamepad(player)
+  function Game:_handlegamepad(player)
     local gamepad = input.gamepad(player)
     -- player = player + 1
     self.gamepads[player].dir:set(0, 0)
@@ -198,4 +198,4 @@ do
     self.gamepads[player]._y = self.gamepads[player].y
   end
 end
-return Play
+return Game

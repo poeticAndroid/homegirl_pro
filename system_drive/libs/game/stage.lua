@@ -3,8 +3,8 @@ local Vector2 = require(_DIR .. "vector2")
 
 local Stage = Object:extend()
 do
-  function Stage:constructor(play, scene)
-    self.play = play
+  function Stage:constructor(game, scene)
+    self.game = game
     self.scene = scene
     self._destroyedactors = {}
   end
@@ -14,7 +14,7 @@ do
     self.actorsbytag = {}
     self.actors = {}
     if self.scene.palette then
-      image.usepalette(self.play.costumes[self.scene.palette][1])
+      image.usepalette(self.game.costumes[self.scene.palette][1])
     end
     if self.scene.bgcolor then
       gfx.bgcolor(self.scene.bgcolor)
@@ -58,7 +58,7 @@ do
   end
 
   function Stage:addactor(obj)
-    local actor = self.play.roles[obj.role or "role"]:new(self, obj)
+    local actor = self.game.roles[obj.role or "role"]:new(self, obj)
     self.actorsbytag[actor.role or "role"] = self.actorsbytag[actor.role or "role"] or {}
     table.insert(self.actorsbytag[actor.role or "role"], actor)
     if actor.tags then
