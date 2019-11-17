@@ -108,6 +108,7 @@ do
   end
 
   function Game:changescene(scenename)
+    print("Scene: " .. scenename)
     if not self.scenes[scenename] then
       print("Scene '" .. scenename .. "' not found!")
       return sys.exit(404)
@@ -125,6 +126,22 @@ do
       sys.stepinterval(1000 / fps)
     end
     return self.targetfps
+  end
+
+  function Game:playsound(soundname, channel, loop)
+    if not channel then
+      self._lastchan = self._lastchan or 0
+      self._lastchan = self._lastchan + 1
+      channel = self._lastchan
+    end
+    audio.play(channel, self.sounds[soundname])
+    if loop ~= nil then
+      if loop then
+        audio.channelloop(channel, 0, audio.samplelength(self.sounds[soundname]))
+      else
+        audio.channelloop(channel, 0, 0)
+      end
+    end
   end
 
   function Game:_newgamepad()
