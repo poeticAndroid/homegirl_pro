@@ -63,6 +63,7 @@ function _init()
 end
 
 function _step(t)
+  scrn:title((sys.env("ENGINE") or "System") .. " Workshop\t" .. friendly(sys.memoryusage()) .. " memory used")
   view.active(scrn.rootvp)
   scrn:step(t)
   local seen = {}
@@ -148,7 +149,7 @@ function about()
       "About Workshop",
       "Workshop " ..
         sysver ..
-          " by poeticAndroid\n\n Running on " ..
+          " by poeticAndroid\n\n  Running on " ..
             (sys.env("ENGINE") or "<Unknown system>") .. " " .. (sys.env("ENGINE_VERSION") or "")
     )
   )
@@ -204,4 +205,15 @@ function mountremote()
       fs.mount(driveinp.content, url)
     end
   end
+end
+
+function friendly(bytes)
+  local units = bytes
+  local measures = {"YiB", "ZiB", "EiB", "PiB", "TiB", "GiB", "MiB", "KiB"}
+  local measure = "bytes"
+  while units >= 1024 do
+    units = units / 1024
+    measure = table.remove(measures)
+  end
+  return string.format("%4.3f", units) .. " " .. measure
 end

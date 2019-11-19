@@ -30,6 +30,10 @@ do
           return sys.exit()
         end
       end
+      if input.hotkey() == "." then
+        view.zindex(self.screen, 0)
+        view.focused(self.screen, false)
+      end
     else
       self._assets = self._assets or {}
       if not self.costumes then
