@@ -18,13 +18,14 @@ do
 
   function Game:step(t)
     if self.scene then
+      local sc = self.scene
       for i, pad in pairs(self.gamepads) do
         self:_handlegamepad(i)
       end
-      self.scene:step(t)
-      self.scene:draw(t)
+      sc:step(t)
+      sc:draw(t)
       if input.hotkey() == "\x1b" then
-        if self.scene ~= self.scenes["start"] then
+        if sc ~= self.scenes["start"] then
           self:changescene("start")
         else
           return sys.exit()
@@ -108,6 +109,7 @@ do
     self.size = Vector2:new(view.size(self.screen))
     image.copymode(1)
     self:framerate(self.targetfps or 50)
+    image.pointer(image.new())
     self:changescene("start")
   end
 

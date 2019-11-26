@@ -63,7 +63,7 @@ function _init()
 end
 
 function _step(t)
-  scrn:title((sys.env("ENGINE") or "System") .. " Workshop\t" .. friendly(sys.memoryusage()) .. " memory used")
+  scrn:title((sys.env("ENGINE") or "System") .. " Workshop\t" .. friendly(sys.memoryusage()) .. " memory in use")
   view.active(scrn.rootvp)
   scrn:step(t)
   local seen = {}
@@ -215,5 +215,5 @@ function friendly(bytes)
     units = units / 1024
     measure = table.remove(measures)
   end
-  return string.format("%4.3f", units) .. " " .. measure
+  return string.format("%1.1f", units) .. " " .. measure
 end
