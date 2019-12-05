@@ -17,6 +17,8 @@ function _step(t)
   local h, m, s, ms = sys.time()
   if _sec ~= s then
     _ms = t
+  else
+    return
   end
   _sec = s
   ms = t - _ms

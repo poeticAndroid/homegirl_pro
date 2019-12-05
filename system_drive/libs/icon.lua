@@ -133,11 +133,13 @@ do
     local prevvp = view.active()
     view.active(self.container)
     local hotkey = input.hotkey()
+    local pw, ph = view.size(self.parentvp)
+    local cw, ch = self:size()
     if hotkey == "a" then
       for name, child in pairs(self.children) do
         child:select()
       end
-    elseif hotkey == "r" or not self._dirty then
+    elseif hotkey == "r" or pw > cw or ph > ch then
       self:tidy()
     end
     gfx.cls()
