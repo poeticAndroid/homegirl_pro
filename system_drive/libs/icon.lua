@@ -150,7 +150,7 @@ do
       local cw, ch = child:size()
       view.active(child.container)
       if self.backgroundimage then
-        image.copymode(0)
+        image.copymode(7)
         image.draw(self.backgroundimage, 0, 0, cx, cy, cw, ch)
       else
         gfx.cls()
@@ -167,6 +167,7 @@ do
     view.active(self.container)
     self:size(vw, vh)
     if self.backgroundimage then
+      image.copymode(7)
       image.draw(self.backgroundimage, 0, 0, 0, 0, vw, vh)
     end
     local mx, my, mb = input.mouse()

@@ -23,6 +23,7 @@ function _step(t)
   _sec = s
   ms = t - _ms
   view.active(win.mainvp)
+  gfx.cls()
   win:title(string.format("%d:%02d:%02d", h, m, s))
   local ww, wh = view.size(win.mainvp)
   ww = ww - 1
