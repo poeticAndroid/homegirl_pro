@@ -48,12 +48,12 @@ function _init(args)
     perms = sys.permissions(args[1], perms)
   end
   if perms then
-    print("Permissions for programs on " .. string.upper(args[1]) .. " drive\n")
+    print("Permissions for programs on " .. string.lower(args[1]) .. " drive\n")
     for i, sym in pairs(SYMS) do
       print(sym .. " = " .. ((perms & PERM[string.lower(sym)] > 0) and "true  " or "false ") .. "-- " .. PERMDESC[sym])
     end
     print("\nPermission sum: " .. perms)
   else
-    print("Could not access permissions of " .. string.upper(args[1]) .. " drive")
+    print("Could not access permissions of " .. string.lower(args[1]) .. " drive")
   end
 end

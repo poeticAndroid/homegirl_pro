@@ -55,6 +55,10 @@ do
       cw, ch = self:size(mw + 8 + (cw - vw), mh + bh + 12 + (ch - vh))
       local pl, pt = parent:position()
       local pw, ph = parent:size()
+      pl = math.max(pl, 0)
+      pt = math.max(pt, 0)
+      pw = math.max(pw, cw)
+      ph = math.max(ph, ch)
       self:position(pl + pw / 2 - cw / 2, pt + ph / 2 - ch / 2)
     end
   end
