@@ -50,6 +50,7 @@ do
     if not self.divend then
       self.divend = t
       self.divstart = t
+      self._patloop = 1
     end
     if self.divend < t then
       self.divstart = self.divend
@@ -58,6 +59,7 @@ do
       if self.div > 64 then
         self.div = 1
         self.pos = self.pos + 1
+        self._patloop = 1
       end
       if self.pos > self.data.songlength then
         self.pos = self.data.restart
@@ -83,16 +85,28 @@ do
           chanstate.sample = chan.sample
           local sam = chanstate.sample
           audio.play(i - 1, self.samples[sam])
-          chanstate.volume = audio.channelvolume(i - 1, self.data.samples[sam].volume)
+          chanstate.volume = math.min(math.max(0, self.data.samples[sam].volume), 63)
         end
         if chan.period > 0 then
           chanstate.period = chan.period
           chanstate.semitone = chan.semitone
         end
+
+        --- setup effects ---
         local fx, x, y = chan.effect.id, chan.effect.x, chan.effect.y
         local z = x * 16 + y
-        if fx == 0 and z > 0 then -- Arpeggio
-          print("Arpeggio")
+        if fx == 0 and z == 0 then -- no effect
+        elseif fx == 0 then -- Arpeggio
+          chanstate.periodstart = chanstate.period
+          chanstate.minperiod = chanstate.period
+          chanstate.maxperiod = chanstate.period
+          chanstate.periodslide = 0
+          chanstate.arpint = self.divinterval / self.ticksperdiv
+          chanstate.nextarp = self.divstart + chanstate.arpint
+          chanstate.periodqueue = {}
+          table.insert(chanstate.periodqueue, chanstate.period * math.pow(0.94396402258151, x))
+          table.insert(chanstate.periodqueue, chanstate.period * math.pow(0.94396402258151, y))
+          table.insert(chanstate.periodqueue, chanstate.period)
         elseif fx == 1 or fx == 2 then -- Slide up/down
           if fx == 1 then
             z = z * -1
@@ -120,7 +134,17 @@ do
           chanstate.maxperiod = chanstate.period
           chanstate.periodslide = 0
           chanstate.vibratospeed = math.pi * ((x * self.ticksperdiv) / 32)
-          chanstate.vibratoamp = (y / 16) * (chanstate.period / 12)
+          chanstate.vibratoamp = chanstate.period - chanstate.period * math.pow(0.94396402258151, (y / 8))
+        elseif fx == 6 then -- Continue 'Vibrato', but also do Volume slide
+          chanstate.periodslide = 0
+          chanstate.volumestart = chanstate.volume
+          if x > 0 then
+            chanstate.volumeslide = x * (self.ticksperdiv - 1)
+          elseif y > 0 and chanstate.volume >= y then
+            chanstate.volumeslide = -y * (self.ticksperdiv - 1)
+          else
+            chanstate.volumeslide = chanstate.prevvolumeslide
+          end
         elseif fx == 9 then -- Set sample offset
           audio.channelhead(i - 1, (x * 4096 + y * 256) * 2)
         elseif fx == 10 then -- Volume slide
@@ -136,12 +160,28 @@ do
           self.pos = z + 1
           self.div = 0
         elseif fx == 12 then -- Set volume
-          chanstate.volume = audio.channelvolume(i - 1, z)
+          chanstate.volume = math.min(math.max(0, z), 63)
         elseif fx == 13 then -- Pattern Break
           self.pos = self.pos + 1
           self.div = x * 10 + y
         elseif fx == 1400 then -- Set filter on/off
           -- This is not a real Amiga
+        elseif fx == 1406 then --Loop pattern
+          if x == 0 then
+            self._patloop = self.div
+          else
+            self.div = self._patloop - 1
+            chan.effect.x = chan.effect.x - 1
+          end
+        elseif fx == 1409 then -- Retrigger sample
+          if x > 0 then
+            chanstate.retriggerint = x * (self.divinterval / self.ticksperdiv)
+            chanstate.nextretrigger = self.divstart + chanstate.retriggerint
+          end
+        elseif fx == 1410 then -- Fine volume slide up
+          chanstate.volume = math.min(math.max(0, chanstate.volume + x), 63)
+        elseif fx == 1411 then -- Fine volume slide down
+          chanstate.volume = math.min(math.max(0, chanstate.volume - x), 63)
         elseif fx == 15 then -- Set speed
           if z <= 32 then
             self.ticksperdiv = z
@@ -175,9 +215,16 @@ do
     end
     for i, chan in ipairs(self._div) do
       local chanstate = self.chanstate[i]
+
+      --- maintain effects ---
       local fx, x, y = chan.effect.id, chan.effect.x, chan.effect.y
       local z = x * 16 + y
       if fx == 0 and z > 0 then -- Arpeggio
+        if chanstate.nextarp < t then
+          chanstate.nextarp = chanstate.nextarp + chanstate.arpint
+          chanstate.period = table.remove(chanstate.periodqueue, 1)
+          table.insert(chanstate.periodqueue, chanstate.period)
+        end
       elseif fx == 1 or fx == 2 or fx == 3 then -- Slide up/down/to note
         chanstate.period =
           math.min(
@@ -186,8 +233,16 @@ do
         )
       elseif fx == 4 then -- Vibrato
         chanstate.period = chanstate.periodstart + math.sin(self.divpos * chanstate.vibratospeed) * chanstate.vibratoamp
+      elseif fx == 6 then -- Continue 'Vibrato', but also do Volume slide
+        chanstate.period = chanstate.periodstart + math.sin(self.divpos * chanstate.vibratospeed) * chanstate.vibratoamp
+        chanstate.volume = math.min(math.max(0, chanstate.volumestart + self.divpos * chanstate.volumeslide), 63)
       elseif fx == 10 then -- Volume slide
         chanstate.volume = math.min(math.max(0, chanstate.volumestart + self.divpos * chanstate.volumeslide), 63)
+      elseif fx == 1409 then -- Retrigger sample
+        if chanstate.nextretrigger < t then
+          chanstate.nextretrigger = chanstate.nextretrigger + chanstate.retriggerint
+          audio.channelhead(i - 1, 0)
+        end
       end
       audio.channelvolume(i - 1, chanstate.volume)
       audio.channelfreq(i - 1, 7093789.2 / (2 * chanstate.period))
