@@ -84,9 +84,11 @@ function parse(moddata)
     end
     sample.volume, pos = string.unpack(">I1", moddata, pos)
     sample.repeatstart, pos = string.unpack(">I2", moddata, pos)
-    sample.repeatstart = sample.repeatstart * 2
     sample.repeatlength, pos = string.unpack(">I2", moddata, pos)
-    sample.repeatlength = sample.repeatlength * 2
+    if samplecount > 15 then
+      sample.repeatstart = sample.repeatstart * 2
+      sample.repeatlength = sample.repeatlength * 2
+    end
     table.insert(mod.samples, sample)
   end
   mod.songlength, pos = string.unpack(">I1", moddata, pos)
@@ -149,7 +151,6 @@ function periodtosemitone(period)
       return periods[period + dev]
     end
     dev = dev + 1
-    -- print("slack!")
   end
 end
 

@@ -27,6 +27,8 @@ function _init(args)
       task = sys.startchild(_DRIVE .. "cmd/show.lua", {openfile})
     elseif ext == "wav" then
       task = sys.startchild(_DRIVE .. "cmd/play.lua", {openfile})
+    elseif ext == "mod" then
+      task = sys.startchild(_DRIVE .. "cmd/modplayer.lua", {openfile})
     else
       task = sys.startchild(_DRIVE .. "cmd/edit.lua", {openfile})
     end
