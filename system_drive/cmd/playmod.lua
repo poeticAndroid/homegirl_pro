@@ -3,13 +3,13 @@ local mod, pos = 0, 0
 
 function _init(args)
   mod = ModPlayer:new(args[1])
+  print(mod.data.sig)
   for i, sample in ipairs(mod.data.samples) do
     if sample.name ~= "" and string.sub(sample.name, 1, 1) ~= "#" then
       print(sample.name)
     end
   end
-  print(mod.data.sig)
-  print("Title: " .. mod.data.title .. "\n")
+  print("\nTitle: " .. mod.data.title .. "\n")
   for i, sample in ipairs(mod.data.samples) do
     if string.sub(sample.name, 1, 1) == "#" then
       print(sample.name)
