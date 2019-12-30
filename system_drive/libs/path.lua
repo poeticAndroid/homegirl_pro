@@ -50,7 +50,7 @@ end
 
 function path.basename(pathname)
   pathname = path.notrailslash(pathname)
-  local i = string.find(string.reverse(pathname), "/") or string.find(string.reverse(pathname), ":")
+  local i = string.find(string.reverse(pathname), "/") or string.find(string.reverse(pathname), "%:")
   if i then
     return string.sub(pathname, -i + 1)
   else
