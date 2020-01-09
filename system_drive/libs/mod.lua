@@ -119,12 +119,12 @@ function parse(moddata)
         a, b, c, d, pos = string.unpack("I1I1I1I1", moddata, pos)
         channel.sample = (a & 240) + math.floor(c / 16)
         channel.period = (a & 15) * 256 + b
+        channel.fx = (c & 15) * 256 + d
         channel.semitone = periodtosemitone(channel.period)
-        a = (c & 15) * 256 + d
         channel.effect = {}
-        channel.effect.id = math.floor(a / 256) % 16
-        channel.effect.x = math.floor(a / 16) % 16
-        channel.effect.y = math.floor(a / 1) % 16
+        channel.effect.id = math.floor(channel.fx / 256) % 16
+        channel.effect.x = math.floor(channel.fx / 16) % 16
+        channel.effect.y = math.floor(channel.fx / 1) % 16
         if channel.effect.id == 14 then
           channel.effect.id = 1400 + channel.effect.x
           channel.effect.x = channel.effect.y

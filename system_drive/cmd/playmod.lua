@@ -1,5 +1,5 @@
 local ModPlayer = require("modplayer")
-local mod, pos = 0, 0
+local mod, pos, div = 0, 0, 0
 
 function _init(args)
   mod = ModPlayer:new(args[1])
@@ -26,5 +26,29 @@ function _step(t)
     print("The end!")
     return sys.exit()
   end
+  -- if pos ~= mod.pos then
+  --   print("Table " .. (mod.pos - 1))
+  -- end
+  -- if mod._div and div ~= mod.div then
+  --   print(
+  --     string.format(
+  --       "%02X %03X%02X%03X %03X%02X%03X %03X%02X%03X %03X%02X%03X",
+  --       mod.div - 1,
+  --       mod._div[1].period,
+  --       mod._div[1].sample,
+  --       mod._div[1].fx,
+  --       mod._div[2].period,
+  --       mod._div[2].sample,
+  --       mod._div[2].fx,
+  --       mod._div[3].period,
+  --       mod._div[3].sample,
+  --       mod._div[3].fx,
+  --       mod._div[4].period,
+  --       mod._div[4].sample,
+  --       mod._div[4].fx
+  --     )
+  --   )
+  -- end
   pos = mod.pos
+  div = mod.div
 end

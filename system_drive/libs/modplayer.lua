@@ -48,8 +48,8 @@ do
 
   function ModPlayer:step(t)
     if not self.divend then
-      self.divend = t
       self.divstart = t
+      self.divend = self.divstart + self.divinterval
       self._patloop = 1
     end
     if self.divend < t then
@@ -64,7 +64,6 @@ do
       if self.pos > self.data.songlength then
         self.pos = self.data.restart
       end
-      -- print("pos: " .. self.pos .. "\tdiv: " .. self.div)
       self._div = self.data.patterns[self.data.patterntable[self.pos]][self.div]
       for i, chan in ipairs(self._div) do
         self.chanstate[i] = self.chanstate[i] or {period = 1, volume = 1, sample = #(self.data.samples)}
