@@ -52,7 +52,11 @@
     image.load(filename[, maxframes]): img[]
     image.save(filename, img[]): success
     image.size(img): width, height
+    image.colordepth(img): colorbits
     image.duration(img[, milliseconds]): milliseconds
+    image.pixel(img, x, y[, color]): color
+    image.palette(img, color[, red, green, blue]): red, green, blue
+    image.bgcolor(img[, color]): color
     image.copymode([mode]): mode
     image.tri(img, x1,y1, x2,y2, x3,y3, imgx1,imgy1, imgx2,imgy2, imgx3,imgy3)
     image.draw(img, x, y, imgx, imgy, width, height[, imgwidth, imgheight])
