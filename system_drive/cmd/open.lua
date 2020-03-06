@@ -30,7 +30,7 @@ function _init(args)
     elseif ext == "mod" then
       task = sys.startchild(_DRIVE .. "cmd/playmod.lua", {openfile})
     else
-      task = sys.startchild(_DRIVE .. "cmd/edit.lua", {openfile})
+      task = sys.startchild(_DRIVE .. "tools/edit.lua", {openfile})
     end
   end
 end
@@ -288,7 +288,15 @@ function editselected()
   local board = win.children["items"].children["items"]
   local selected = board:getselected()
   for i, name in ipairs(selected) do
-    sys.exec(_DRIVE .. "cmd/edit.lua", {name})
+    local ext = ""
+    if string.find(name, "%.") then
+      ext = string.lower(string.sub(name, 1 - string.find(string.reverse(name), "%.")))
+    end
+    if ext == "gif" then
+      sys.exec(_DRIVE .. "tools/paint.lua", {name})
+    else
+      sys.exec(_DRIVE .. "tools/edit.lua", {name})
+    end
   end
 end
 function renameselected()
