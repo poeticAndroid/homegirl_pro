@@ -92,7 +92,8 @@ function createdirwindow()
                 self.checked = showall
                 refresh()
               end
-            }
+            },
+            {label = "Close", hotkey = "q", action = win.onclose}
           }
         },
         {
@@ -144,6 +145,12 @@ function _step(t)
       sys.writetochild(task, string.sub(input.text(), 1, 1))
       log = log .. string.sub(input.text(), 1, 1)
       input.text("")
+      if input.hotkey() == "c" then
+        sys.killchild(task)
+      end
+      if input.hotkey() == "q" then
+        win:onclose()
+      end
     end
     log = log .. sys.readfromchild(task) .. sys.errorfromchild(task)
     local stpint = sys.stepinterval()

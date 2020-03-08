@@ -15,7 +15,7 @@ do
       self.size = Vector2:new(text.draw(self.text, fonts[self.font], self.game.size.x, self.game.size.y))
       self.anchor = self.size:multiply(.5, .5, self.anchor or Vector2:new())
     end
-    text.copymode(self.copymode or 2)
+    text.copymode(self.copymode or 17, true)
     self.size:set(
       text.draw(self.text, fonts[self.font], self.screenpos.x - self.anchor.x, self.screenpos.y - self.anchor.y)
     )

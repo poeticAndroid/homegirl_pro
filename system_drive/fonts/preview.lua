@@ -1,7 +1,7 @@
 function _init()
   local sw, sh = view.size(view.newscreen(15, 8))
   defpal()
-  text.copymode(1)
+  text.copymode(3, true)
 
   local x, y, col = 0, 0, 0
   local w, h

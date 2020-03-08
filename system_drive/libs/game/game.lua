@@ -107,7 +107,7 @@ do
   function Game:start()
     self.screen = view.newscreen(self.screenmode, self.colorbits)
     self.size = Vector2:new(view.size(self.screen))
-    image.copymode(1)
+    image.copymode(3, true)
     self:framerate(self.targetfps or 50)
     image.pointer(image.new())
     self:changescene("start")
