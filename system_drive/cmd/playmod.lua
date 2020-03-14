@@ -1,5 +1,5 @@
 local ModPlayer = require("modplayer")
-local mod, pos, div = 0, 0, 0
+local mod, pos, div, postime = 0, 0, 0
 
 function _init(args)
   mod = ModPlayer:new(args[1])
@@ -21,7 +21,10 @@ end
 
 function _step(t)
   mod:step(t)
-  if pos > mod.pos then
+  if not postime then
+    postime = t
+  end
+  if pos > mod.pos or (t - postime) > (1000 * 60) then
     mod:stop()
     print("The end!")
     return sys.exit()
@@ -49,6 +52,9 @@ function _step(t)
   --     )
   --   )
   -- end
+  if pos ~= mod.pos then
+    postime = t
+  end
   pos = mod.pos
   div = mod.div
 end
