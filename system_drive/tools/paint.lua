@@ -70,9 +70,9 @@ function _init(args)
           onopen = updatebrushmenu,
           menu = {
             {label = "Background", _mode = 16, action = reqbrushmode},
-            {label = "Foreground", _mode = 17, action = reqbrushmode, hotkey = "9"},
+            {label = "Foreground", _mode = 17, action = reqbrushmode, hotkey = "8"},
             {label = "Src bg", _mode = 18, action = reqbrushmode},
-            {label = "Source", _mode = 20, action = reqbrushmode},
+            {label = "Source", _mode = 20, action = reqbrushmode, hotkey = "9"},
             {label = "Darker", _mode = 21, action = reqbrushmode},
             {label = "Lighter", _mode = 22, action = reqbrushmode},
             {label = "Average", _mode = 23, action = reqbrushmode},
@@ -149,9 +149,9 @@ function _init(args)
   anim = {}
   history = {}
   frame = 1
-  tool = 1
+  tool = 2
   bgcolor = 0
-  fgcolor = 1
+  fgcolor = 15
   brushsize = 1
   brush = image.new(brushsize, brushsize, 8)
   canvasvp = view.new(scrn.rootvp, 0, 0, 32, 32)
@@ -231,21 +231,14 @@ function _step(t)
   elseif key == "+" then
     brushsize = brushsize + 1
     brushcolor = 1024
+  elseif key == "r" then
+    ramppalette(bgcolor, fgcolor)
   elseif key == " " then
-    tool = 1
-    while tools[tool] ~= "move" do
-      tool = tool + 1
-    end
+    settool("move")
   elseif key == "b" then
-    tool = 1
-    while tools[tool] ~= "brush" do
-      tool = tool + 1
-    end
+    settool("brush")
   elseif key == "x" then
-    tool = 1
-    while tools[tool] ~= "box" do
-      tool = tool + 1
-    end
+    settool("box")
   else
     if key ~= "" then
       for i, v in ipairs(tools) do
@@ -477,14 +470,30 @@ function updateui()
   gfx.bgcolor(scrn.darkcolor)
   gfx.cls()
   local f = globalpal and 1 or frame
-  local r, g, b = image.palette(anim[f], fgcolor)
+  local r, g, b = scrn:palette(fgcolor)
   x, y = view.size(sidebarvp)
+  gfx.fgcolor(gfx.nearestcolor(0, 15, 15))
+  gfx.bar(0, 0, 8, y)
+  gfx.fgcolor(gfx.nearestcolor(15, 0, 15))
+  gfx.bar(8, 0, 8, y)
+  gfx.fgcolor(gfx.nearestcolor(15, 15, 0))
+  gfx.bar(16, 0, 8, y)
+
   gfx.fgcolor(gfx.nearestcolor(15, 0, 0))
   gfx.bar(0, (1 - r / 15) * y, 8, y)
   gfx.fgcolor(gfx.nearestcolor(0, 15, 0))
   gfx.bar(8, (1 - g / 15) * y, 8, y)
   gfx.fgcolor(gfx.nearestcolor(0, 0, 15))
   gfx.bar(16, (1 - b / 15) * y, 8, y)
+
+  gfx.fgcolor(scrn.darkcolor)
+  gfx.bar(0, (1 - r / 15) * y - 2, 8, 4)
+  gfx.bar(8, (1 - g / 15) * y - 2, 8, 4)
+  gfx.bar(16, (1 - b / 15) * y - 2, 8, 4)
+  gfx.fgcolor(fgcolor)
+  gfx.bar(0 + 1, (1 - r / 15) * y - 1, 6, 2)
+  gfx.bar(8 + 1, (1 - g / 15) * y - 1, 6, 2)
+  gfx.bar(16 + 1, (1 - b / 15) * y - 1, 6, 2)
 
   view.active(canvasvp)
   local iw, ih = image.size(anim[frame])
@@ -494,9 +503,10 @@ function updateui()
   bgcolor = gfx.bgcolor(image.bgcolor(anim[globalpal and 1 or frame]))
 
   view.active(palettevp)
-  image.copymode(20)
   x, y = view.size(palettevp)
+  image.copymode(20)
   image.draw(wpaper, 0, 0, x, y, sw, sh)
+  image.copymode(3)
   s = math.min(math.max(3, math.floor(sw / 32)), 10)
   x, y = 0, 1
   for i = 0, math.pow(2, bpp) - 1 do
@@ -634,6 +644,7 @@ function stepui(t)
   view.active(sidebarvp)
   local vw, vh = view.size(sidebarvp)
   mx, my, mb = input.mouse()
+  my = my - vh / 32
   if mb == 1 then
     local f = globalpal and 1 or frame
     local r, g, b = image.palette(makeuniq(f), fgcolor)
@@ -766,10 +777,12 @@ function stepcanvas(t)
         image.copypalette(brush)
         image.bgcolor(brush, bgcolor)
         brushcolor = clipw == 0 or cliph == 0
+        settool("brush")
+        updateui()
       end
-      image.copymode(brushmode, brushmasked)
-      updatebrush(gfx.fgcolor(fgcolor))
-      paintat(mx, my)
+      -- image.copymode(brushmode, brushmasked)
+      -- updatebrush(gfx.fgcolor(fgcolor))
+      -- paintat(mx, my)
       startx, starty = nil, nil
     end
   elseif tools[tool] == "fill" then
@@ -1018,6 +1031,19 @@ function resizeanim(l, t, r, b)
   updateui()
 end
 
+function ramppalette(first, last)
+  local f = globalpal and 1 or frame
+  makeuniq(f)
+  first, last = math.min(first, last), math.max(first, last)
+  local diff = last - first
+  local fr, fg, fb = image.palette(anim[f], first)
+  local lr, lg, lb = image.palette(anim[f], last)
+  local diffr, diffg, diffb = lr - fr, lg - fg, lb - fb
+  for i = 0, diff do
+    image.palette(anim[f], first + i, fr + (i / diff) * diffr, fg + (i / diff) * diffg, fb + (i / diff) * diffb)
+  end
+end
+
 function updatebrush(fgcolor)
   if brushcolor then
     local bw, bh = image.size(brush)
@@ -1115,7 +1141,7 @@ function minbpp(anim)
   while math.pow(2, bpp) < colors do
     bpp = bpp + 1
   end
-  return bpp
+  return math.max(1, bpp)
 end
 
 function hasglobalpal(anim)
@@ -1144,11 +1170,18 @@ function hasfixedfps(anim)
 end
 
 function defaultimage()
-  local img = image.new(160, 90, 6)
+  local img = image.new(240, 135, 6)
   image.pixel(img, 0, 0, 255)
   return img
 end
 
 function math.round(x)
   return x >= 0 and math.floor(x + 0.5) or math.ceil(x - 0.5)
+end
+
+function settool(name)
+  tool = 1
+  while tools[tool] ~= name and tool < #tools do
+    tool = tool + 1
+  end
 end
