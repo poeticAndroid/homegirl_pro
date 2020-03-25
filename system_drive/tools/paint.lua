@@ -1,7 +1,7 @@
 local Screen, Menu, FileRequester = require("screen"), require("menu"), require("filerequester")
 local scrn, anim, frame, filename, saved, history
 local canvasvp, toolbarvp, palettevp, sidebarvp
-local updateagain, icons, wpaper, menu
+local updateagain, icons, wpaper, menu, crosshair, nopointer
 local tools = {"move", "brush", "picker", "select", "fill", "line", "circle", "box"}
 local tool, fgcolor, bgcolor, brushsize
 local brushmode, brushmasked, brushcolor, brush = 3, true, 1024, nil
@@ -136,7 +136,8 @@ function _init(args)
             {label = "128", _bpp = 7, action = reqbpp},
             {label = "256", _bpp = 8, action = reqbpp}
           }
-        }
+        },
+        {label = "Hide cursor", action = togglepointer, hotkey = "h"}
       }
     }
   }
@@ -155,7 +156,8 @@ function _init(args)
   brushsize = 1
   brush = image.new(brushsize, brushsize, 8)
   canvasvp = view.new(scrn.rootvp, 0, 0, 32, 32)
-  makepointer()
+  crosshair = makepointer()
+  nopointer = image.new(1, 1, 2)
   toolbarvp = view.new(scrn.rootvp, 0, 0, 10, #icons * 9 + 1)
   sidebarvp = view.new(scrn.rootvp, 0, 0, 1, 1)
   palettevp = view.new(scrn.rootvp, 0, 0, 1, 1)
@@ -388,6 +390,15 @@ end
 function togglefixedfps(struct)
   fixedfps = not fixedfps
   updateui()
+end
+function togglepointer(struct)
+  struct.checked = not struct.checked
+  view.active(canvasvp)
+  if struct.checked then
+    image.pointer(nopointer)
+  else
+    image.pointer(crosshair, 5, 5)
+  end
 end
 
 function insertframe()
@@ -1122,6 +1133,7 @@ function makepointer()
   local pimg = image.new(11, 11, 2)
   image.copy(pimg, 0, 0, 0, 0, 11, 11)
   image.pointer(pimg, 5, 5)
+  return pimg
 end
 
 function minbpp(anim)
