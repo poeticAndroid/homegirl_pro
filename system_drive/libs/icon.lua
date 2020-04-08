@@ -151,7 +151,9 @@ do
       view.active(child.container)
       if self.backgroundimage then
         image.copymode(20)
+        image.errordiffusion(true)
         image.draw(self.backgroundimage, 0, 0, cx, cy, cw, ch)
+        image.errordiffusion(false)
       else
         gfx.cls()
       end
@@ -168,7 +170,9 @@ do
     self:size(vw, vh)
     if self.backgroundimage then
       image.copymode(20)
+      image.errordiffusion(true)
       image.draw(self.backgroundimage, 0, 0, 0, 0, vw, vh)
+      image.errordiffusion(false)
     end
     local mx, my, mb = input.mouse()
     local drop = input.drop()

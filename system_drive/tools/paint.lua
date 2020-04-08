@@ -69,6 +69,7 @@ function _init(args)
           label = "Color",
           onopen = updatebrushmenu,
           menu = {
+            {label = "Error diffusion", _errdiff = true, action = toggleerrdiff},
             {label = "Background", _mode = 16, action = reqbrushmode},
             {label = "Foreground", _mode = 17, action = reqbrushmode, hotkey = "8"},
             {label = "Src bg", _mode = 18, action = reqbrushmode},
@@ -361,6 +362,10 @@ function updatebrushmenu(struct)
     if item._masked then
       item.checked = brushmasked
     end
+    if item._errdiff then
+      view.active(canvasvp)
+      item.checked = image.errordiffusion()
+    end
   end
 end
 function updateanimmenu(struct)
@@ -399,6 +404,10 @@ function togglepointer(struct)
   else
     image.pointer(crosshair, 5, 5)
   end
+end
+function toggleerrdiff(struct)
+  view.active(canvasvp)
+  image.errordiffusion(not image.errordiffusion())
 end
 
 function insertframe()
