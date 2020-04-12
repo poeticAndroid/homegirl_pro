@@ -23,6 +23,8 @@ do
         for _name, _val in pairs(val) do
           self[name][_name] = _val
         end
+      elseif type(val) == "table" and type(val.x) == "number" and type(val.y) == "number" then
+        self[name] = Vector2:new(val)
       else
         self[name] = val
       end

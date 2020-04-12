@@ -93,9 +93,9 @@ do
         end
       elseif self._assets.scenes and #(self._assets.scenes) > 0 then
         local file = table.remove(self._assets.scenes)
-        if string.sub(file, -4) == ".lua" then
+        if string.sub(file, -10) == ".scene.lua" then
           local scene = require(self.gamedir .. "scenes/" .. file)
-          self.scenes[string.sub(file, 1, -5)] = self.stages[scene.stage or "stage"]:new(self, scene)
+          self.scenes[string.sub(file, 1, -11)] = self.stages[scene.stage or "stage"]:new(self, scene)
           print("  " .. file)
         end
       else
