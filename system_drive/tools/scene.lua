@@ -44,6 +44,7 @@ end
 
 function _step(t)
   scrn:step(t)
+  local sw, sh = scrn:size()
   local key = input.hotkey()
   if key == "z" then
     undo()
@@ -65,16 +66,17 @@ function _step(t)
     end
     text.copymode(17, true)
     gfx.fgcolor(scrn.darkcolor)
-    local tw, th = text.draw(txt, fonts["victoria.8b"])
-    gfx.bar(0, 0, tw + 8, th + 8)
+    local tw, th = text.draw(txt, fonts["victoria.8b"], 1024, 1024)
+    gfx.bar(0, 0, tw + 8, 1024)
+    local tt = sh / 2 - ((cur + sel / 2) / #txt) * th
     gfx.fgcolor(gfx.nearestcolor(10, 10, 10))
-    text.draw(txt, fonts["victoria.8b"])
+    text.draw(txt, fonts["victoria.8b"], 0, tt)
     txt = string.sub(txt, 1, cur + sel) .. "_"
     gfx.fgcolor(scrn.lightcolor)
-    text.draw(txt, fonts["victoria.8b"])
+    text.draw(txt, fonts["victoria.8b"], 0, tt)
     txt = string.sub(txt, 1, cur)
     gfx.fgcolor(gfx.nearestcolor(10, 10, 10))
-    text.draw(txt, fonts["victoria.8b"])
+    text.draw(txt, fonts["victoria.8b"], 0, tt)
   end
 end
 
@@ -95,7 +97,7 @@ function loadscene(_filename)
   if fs.isfile(filename) then
     scene = dofile(filename)
   else
-    scene = {actors = {}}
+    scene = {actors = {}, bgcolor = 0}
   end
   emptywardrope()
   costumepath = Path.trailslash(Path.resolve(filename, "../../costumes"))
@@ -104,11 +106,14 @@ function loadscene(_filename)
   end
   if scene.palette then
     costumes[scene.palette] = costumes[scene.palette] or image.load(costumepath .. scene.palette .. ".gif")
-    scrn:usepalette(costumes[scene.palette][1])
-    scrn:autocolor()
+    if costumes[scene.palette] then
+      scrn:usepalette(costumes[scene.palette][1])
+      scrn:autocolor()
+    end
   end
   camera = vec(0, 0)
   history = {}
+  settool({_tool = 1})
   saved = true
 end
 
@@ -149,6 +154,7 @@ end
 
 function render()
   gfx.bgcolor(scene.bgcolor)
+  image.copymode(3, true)
   gfx.cls()
   local w, h = scrn:size()
   local mx, my, mb = input.mouse()
@@ -178,9 +184,8 @@ function render()
         end
         editing = focusedactor
         input.text(stringifytable(editing, ""))
-        input.cursor(0)
+        input.cursor(input.cursor() / 2)
         input.clearhistory()
-        focusedactor = nil
       end
       if tool == 4 then
         removeactor(focusedactor)
@@ -232,6 +237,36 @@ function render()
         actor.size.x,
         actor.size.y
       )
+    else
+      if actor.size then
+        actor.anchor = actor.anchor or vec(actor.size.x / 2, actor.size.y / 2)
+        gfx.line(
+          screenpos.x - actor.anchor.x * actor.scale.x,
+          screenpos.y - actor.anchor.y * actor.scale.y,
+          screenpos.x - actor.anchor.x * actor.scale.x,
+          screenpos.y - actor.anchor.y * actor.scale.y + actor.size.y * actor.scale.y
+        )
+        gfx.line(
+          screenpos.x - actor.anchor.x * actor.scale.x,
+          screenpos.y - actor.anchor.y * actor.scale.y,
+          screenpos.x - actor.anchor.x * actor.scale.x + actor.size.x * actor.scale.x,
+          screenpos.y - actor.anchor.y * actor.scale.y
+        )
+        gfx.line(
+          screenpos.x - actor.anchor.x * actor.scale.x + actor.size.x * actor.scale.x,
+          screenpos.y - actor.anchor.y * actor.scale.y,
+          screenpos.x - actor.anchor.x * actor.scale.x + actor.size.x * actor.scale.x,
+          screenpos.y - actor.anchor.y * actor.scale.y + actor.size.y * actor.scale.y
+        )
+        gfx.line(
+          screenpos.x - actor.anchor.x * actor.scale.x,
+          screenpos.y - actor.anchor.y * actor.scale.y + actor.size.y * actor.scale.y,
+          screenpos.x - actor.anchor.x * actor.scale.x + actor.size.x * actor.scale.x,
+          screenpos.y - actor.anchor.y * actor.scale.y + actor.size.y * actor.scale.y
+        )
+      end
+      gfx.line(screenpos.x - 4, screenpos.y, screenpos.x + 4, screenpos.y)
+      gfx.line(screenpos.x, screenpos.y - 4, screenpos.x, screenpos.y + 4)
     end
     if i > 1 and actor.z < scene.actors[i - 1].z then
       scene.actors[i] = scene.actors[i - 1]
@@ -312,7 +347,13 @@ function stringifytable(tbl, ind)
       sep = ",\n"
     end
   else
+    local keys = {}
     for k, val in pairs(tbl) do
+      table.insert(keys, k)
+    end
+    table.sort(keys)
+    for i, k in ipairs(keys) do
+      local val = tbl[k]
       out = out .. sep
       out = out .. ind .. k .. " = "
       local typ = type(val)
@@ -345,8 +386,10 @@ function commit()
   end
   if scene.palette then
     costumes[scene.palette] = costumes[scene.palette] or image.load(costumepath .. scene.palette .. ".gif")
-    scrn:usepalette(costumes[scene.palette][1])
-    scrn:autocolor()
+    if costumes[scene.palette] then
+      scrn:usepalette(costumes[scene.palette][1])
+      scrn:autocolor()
+    end
   end
   saved = false
 end
