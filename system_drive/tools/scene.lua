@@ -1,7 +1,7 @@
 local Screen, Menu, FileRequester, Path = require("screen"), require("menu"), require("filerequester"), require("path")
 local scrn
 local filename, costumepath, scene, costumes, fonts
-local camera, handle
+local camera, handle, grid
 local focusedactor, editing, tool
 local history
 
@@ -17,6 +17,7 @@ function _init(args)
             {label = "Load..", action = reqload, hotkey = "l"},
             {label = "Save", action = save, hotkey = "s"},
             {label = "Save as..", action = reqsave},
+            {label = "Edit scene..", action = editscene},
             {label = "Quit", action = quit, hotkey = "q"}
           }
         },
@@ -31,11 +32,25 @@ function _init(args)
             {label = "Move", _tool = 5, action = settool, hotkey = "m"},
             {label = "Duplicate", _tool = 6, action = settool, hotkey = "d"}
           }
+        },
+        {
+          label = "Grid",
+          onopen = updategridmenu,
+          menu = {
+            {label = "1x1", _grid = 1, action = setgrid},
+            {label = "2x2", _grid = 2, action = setgrid},
+            {label = "4x4", _grid = 4, action = setgrid},
+            {label = "8x8", _grid = 8, action = setgrid},
+            {label = "16x16", _grid = 16, action = setgrid},
+            {label = "32x32", _grid = 32, action = setgrid},
+            {label = "64x64", _grid = 64, action = setgrid}
+          }
         }
       }
     )
   )
   tool = 1
+  grid = 1
   scrn:autocolor()
   fonts = {}
   fonts["victoria.8b"] = text.loadfont("victoria.8b")
@@ -57,9 +72,15 @@ function _step(t)
     local txt = input.text()
     local cur, sel = input.cursor()
     if cur == #txt and string.sub(txt, -2) == "\n\n" then
-      for i, actor in ipairs(scene.actors) do
-        if actor == editing then
-          scene.actors[i] = fillactor(load("return { " .. txt .. "}")())
+      if scene == editing then
+        local actors = scene.actors
+        scene = load("return { " .. txt .. "}")()
+        scene.actors = scene.actors or actors
+      else
+        for i, actor in ipairs(scene.actors) do
+          if actor == editing then
+            scene.actors[i] = fillactor(load("return { " .. txt .. "}")())
+          end
         end
       end
       editing = nil
@@ -138,6 +159,16 @@ function savescene(_filename)
   saved = true
 end
 
+function editscene()
+  local actors = scene.actors
+  scene.actors = nil
+  editing = scene
+  input.text(stringifytable(editing, ""))
+  input.cursor(input.cursor() / 2)
+  input.clearhistory()
+  scene.actors = actors
+end
+
 function quit()
   sys.exit()
 end
@@ -151,9 +182,19 @@ function settool(struct)
   tool = struct._tool
   editing = nil
 end
+function updategridmenu(struct)
+  for i, item in ipairs(struct.menu) do
+    item.checked = grid == item._grid
+  end
+end
+function setgrid(struct)
+  grid = struct._grid
+end
 
 function render()
+  scrn:title(filename .. (saved and "" or " *"))
   gfx.bgcolor(scene.bgcolor)
+  gfx.fgcolor(gfx.nearestcolor(0, 15, 0))
   image.copymode(3, true)
   gfx.cls()
   local w, h = scrn:size()
@@ -175,9 +216,7 @@ function render()
             {
               costume = "",
               role = "role",
-              position = {x = mx, y = my},
-              size = {x = 32, y = 32},
-              anchor = {x = 16, y = 16}
+              position = {x = mx, y = my}
             }
           )
           table.insert(scene.actors, focusedactor)
@@ -191,7 +230,7 @@ function render()
         removeactor(focusedactor)
       end
       if tool == 6 then
-        focusedactor = load("return " .. stringifytable(focusedactor))()
+        focusedactor = fillactor(load("return " .. stringifytable(focusedactor))())
         table.insert(scene.actors, focusedactor)
       end
     end
@@ -201,8 +240,8 @@ function render()
       mx, my = handle.x, handle.y
     end
     if tool > 4 then
-      focusedactor.position.x = mx + handle.x
-      focusedactor.position.y = my + handle.y
+      focusedactor.position.x = math.floor((grid / 2 + (mx + handle.x)) / grid) * grid
+      focusedactor.position.y = math.floor((grid / 2 + (my + handle.y)) / grid) * grid
     end
   else
     handle = nil
@@ -211,88 +250,116 @@ function render()
   for i, actor in ipairs(scene.actors) do
     local screenpos = vec(w / 2 - camera.x + actor.position.x, h / 2 - camera.y + actor.position.y)
     if
-      mb == 0 and actor.size and actor.anchor and mx >= actor.position.x - actor.anchor.x * actor.scale.x and
-        my >= actor.position.y - actor.anchor.y * actor.scale.y and
-        mx < actor.position.x - actor.anchor.x * actor.scale.x + actor.size.x * actor.scale.x and
-        my < actor.position.y - actor.anchor.y * actor.scale.y + actor.size.y * actor.scale.y
+      mb == 0 and actor._size and actor._anchor and mx >= actor.position.x - actor._anchor.x * actor._scale.x and
+        my >= actor.position.y - actor._anchor.y * actor._scale.y and
+        mx < actor.position.x - actor._anchor.x * actor._scale.x + actor._size.x * actor._scale.x and
+        my < actor.position.y - actor._anchor.y * actor._scale.y + actor._size.y * actor._scale.y
      then
       focusedactor = actor
     end
     if actor.role == "text" then
-      actor.size = actor.size or vec(text.draw(actor.text, fonts[actor.font], 1024, 1024))
-      actor.anchor = actor.anchor or vec(actor.size.x / 2, actor.size.y / 2)
       text.copymode(actor.copymode or 17, true)
-      text.draw(actor.text, fonts[actor.font], screenpos.x - actor.anchor.x, screenpos.y - actor.anchor.y)
+      text.draw(actor.text, fonts[actor.font], screenpos.x - actor._anchor.x, screenpos.y - actor._anchor.y)
     elseif actor.costume and costumes[actor.costume] then
-      actor.size = actor.size or vec(image.size(costumes[actor.costume][actor.frame]))
-      actor.anchor = actor.anchor or vec(actor.size.x / 2, actor.size.y / 2)
       image.draw(
-        costumes[actor.costume][actor.frame],
-        screenpos.x - actor.anchor.x * actor.scale.x,
-        screenpos.y - actor.anchor.y * actor.scale.y,
+        costumes[actor.costume][actor._frame],
+        screenpos.x - actor._anchor.x * actor._scale.x,
+        screenpos.y - actor._anchor.y * actor._scale.y,
         0,
         0,
-        actor.size.x * actor.scale.x,
-        actor.size.y * actor.scale.y,
-        actor.size.x,
-        actor.size.y
+        actor._size.x * actor._scale.x,
+        actor._size.y * actor._scale.y,
+        actor._size.x,
+        actor._size.y
       )
     else
-      if actor.size then
-        actor.anchor = actor.anchor or vec(actor.size.x / 2, actor.size.y / 2)
+      if actor._size then
         gfx.line(
-          screenpos.x - actor.anchor.x * actor.scale.x,
-          screenpos.y - actor.anchor.y * actor.scale.y,
-          screenpos.x - actor.anchor.x * actor.scale.x,
-          screenpos.y - actor.anchor.y * actor.scale.y + actor.size.y * actor.scale.y
+          screenpos.x - actor._anchor.x * actor._scale.x,
+          screenpos.y - actor._anchor.y * actor._scale.y,
+          screenpos.x - actor._anchor.x * actor._scale.x,
+          screenpos.y - actor._anchor.y * actor._scale.y + actor._size.y * actor._scale.y
         )
         gfx.line(
-          screenpos.x - actor.anchor.x * actor.scale.x,
-          screenpos.y - actor.anchor.y * actor.scale.y,
-          screenpos.x - actor.anchor.x * actor.scale.x + actor.size.x * actor.scale.x,
-          screenpos.y - actor.anchor.y * actor.scale.y
+          screenpos.x - actor._anchor.x * actor._scale.x,
+          screenpos.y - actor._anchor.y * actor._scale.y,
+          screenpos.x - actor._anchor.x * actor._scale.x + actor._size.x * actor._scale.x,
+          screenpos.y - actor._anchor.y * actor._scale.y
         )
         gfx.line(
-          screenpos.x - actor.anchor.x * actor.scale.x + actor.size.x * actor.scale.x,
-          screenpos.y - actor.anchor.y * actor.scale.y,
-          screenpos.x - actor.anchor.x * actor.scale.x + actor.size.x * actor.scale.x,
-          screenpos.y - actor.anchor.y * actor.scale.y + actor.size.y * actor.scale.y
+          screenpos.x - actor._anchor.x * actor._scale.x + actor._size.x * actor._scale.x,
+          screenpos.y - actor._anchor.y * actor._scale.y,
+          screenpos.x - actor._anchor.x * actor._scale.x + actor._size.x * actor._scale.x,
+          screenpos.y - actor._anchor.y * actor._scale.y + actor._size.y * actor._scale.y
         )
         gfx.line(
-          screenpos.x - actor.anchor.x * actor.scale.x,
-          screenpos.y - actor.anchor.y * actor.scale.y + actor.size.y * actor.scale.y,
-          screenpos.x - actor.anchor.x * actor.scale.x + actor.size.x * actor.scale.x,
-          screenpos.y - actor.anchor.y * actor.scale.y + actor.size.y * actor.scale.y
+          screenpos.x - actor._anchor.x * actor._scale.x,
+          screenpos.y - actor._anchor.y * actor._scale.y + actor._size.y * actor._scale.y,
+          screenpos.x - actor._anchor.x * actor._scale.x + actor._size.x * actor._scale.x,
+          screenpos.y - actor._anchor.y * actor._scale.y + actor._size.y * actor._scale.y
         )
       end
-      gfx.line(screenpos.x - 4, screenpos.y, screenpos.x + 4, screenpos.y)
-      gfx.line(screenpos.x, screenpos.y - 4, screenpos.x, screenpos.y + 4)
     end
-    if i > 1 and actor.z < scene.actors[i - 1].z then
+    gfx.line(screenpos.x - 4, screenpos.y, screenpos.x + 4, screenpos.y)
+    gfx.line(screenpos.x, screenpos.y - 4, screenpos.x, screenpos.y + 4)
+    if i > 1 and actor._z < scene.actors[i - 1]._z then
       scene.actors[i] = scene.actors[i - 1]
       scene.actors[i - 1] = actor
       sys.stepinterval(1)
     end
   end
+  local gw, ghtv, ghwide = 640, 480, 360
+  gfx.fgcolor(gfx.nearestcolor(0, 0, 15))
+  for i = 1, 4 do
+    gfx.line(w / 2 - gw, h / 2 - ghtv, w / 2 - gw + 8, h / 2 - ghtv)
+    gfx.line(w / 2 - gw, h / 2 - ghwide, w / 2 - gw + 8, h / 2 - ghwide)
+    gfx.line(w / 2 - gw, h / 2 - ghtv, w / 2 - gw, h / 2 - ghtv + 8)
+    gfx.line(w / 2 - gw, h / 2 - ghwide - 4, w / 2 - gw, h / 2 - ghwide + 4)
+
+    gfx.line(w / 2 + gw, h / 2 - ghtv, w / 2 + gw - 8, h / 2 - ghtv)
+    gfx.line(w / 2 + gw, h / 2 - ghwide, w / 2 + gw - 8, h / 2 - ghwide)
+    gfx.line(w / 2 + gw, h / 2 - ghtv, w / 2 + gw, h / 2 - ghtv + 8)
+    gfx.line(w / 2 + gw, h / 2 - ghwide - 4, w / 2 + gw, h / 2 - ghwide + 4)
+
+    gfx.line(w / 2 - gw, h / 2 + ghtv, w / 2 - gw + 8, h / 2 + ghtv)
+    gfx.line(w / 2 - gw, h / 2 + ghwide, w / 2 - gw + 8, h / 2 + ghwide)
+    gfx.line(w / 2 - gw, h / 2 + ghtv, w / 2 - gw, h / 2 + ghtv - 8)
+    gfx.line(w / 2 - gw, h / 2 + ghwide - 4, w / 2 - gw, h / 2 + ghwide + 4)
+
+    gfx.line(w / 2 + gw, h / 2 + ghtv, w / 2 + gw - 8, h / 2 + ghtv)
+    gfx.line(w / 2 + gw, h / 2 + ghwide, w / 2 + gw - 8, h / 2 + ghwide)
+    gfx.line(w / 2 + gw, h / 2 + ghtv, w / 2 + gw, h / 2 + ghtv - 8)
+    gfx.line(w / 2 + gw, h / 2 + ghwide - 4, w / 2 + gw, h / 2 + ghwide + 4)
+
+    gw = gw / 2
+    ghtv = ghtv / 2
+    ghwide = ghwide / 2
+  end
 end
 
 function fillactor(actor)
-  if actor.costume then
-    scene.palette = scene.palette or actor.costume
-    costumes[actor.costume] = costumes[actor.costume] or image.load(costumepath .. actor.costume .. ".gif")
-    actor.frame = actor.frame or 1
-    actor.size = nil
-  end
   if actor.role == "text" then
     actor.text = actor.text or "Text"
     actor.font = actor.font or "victoria.8b"
     if fonts[actor.font] == nil then
       fonts[actor.font] = text.loadfont(actor.font) or text.loadfont("victoria.8b")
     end
-    actor.size = nil
+    actor._size = actor.size or vec(text.draw(actor.text, fonts[actor.font], 1024, 1024))
   end
-  actor.z = actor.z or 0
-  actor.scale = actor.scale or vec(1, 1)
+  if actor.costume then
+    scene.palette = scene.palette or actor.costume
+    costumes[actor.costume] = costumes[actor.costume] or image.load(costumepath .. actor.costume .. ".gif")
+    actor._frame = actor.frame or 1
+    if costumes[actor.costume] then
+      actor._size = actor.size or vec(image.size(costumes[actor.costume][actor._frame]))
+    end
+  end
+  if not actor._size then
+    actor._size = actor.size or vec(8, 8)
+  end
+  actor._anchor = actor.anchor or vec(actor._size.x / 2, actor._size.y / 2)
+  actor._z = actor.z or 0
+  actor._scale = actor.scale or vec(1, 1)
   actor.position = actor.position or vec(0, 0)
   return actor
 end
@@ -349,7 +416,9 @@ function stringifytable(tbl, ind)
   else
     local keys = {}
     for k, val in pairs(tbl) do
-      table.insert(keys, k)
+      if string.sub(k, 1, 1) ~= "_" then
+        table.insert(keys, k)
+      end
     end
     table.sort(keys)
     for i, k in ipairs(keys) do
@@ -380,7 +449,9 @@ end
 
 function commit()
   local commit = stringifytable(scene)
-  table.insert(history, commit)
+  if #history > 0 and history[#history] ~= commit then
+    table.insert(history, commit)
+  end
   while #history > 32 do
     table.remove(history, 1)
   end
@@ -397,6 +468,9 @@ function undo()
   local commit = table.remove(history)
   if commit then
     scene = load("return " .. commit)()
+  end
+  for i, actor in ipairs(scene.actors) do
+    fillactor(actor)
   end
   if scene.palette then
     costumes[scene.palette] = costumes[scene.palette] or image.load(costumepath .. scene.palette .. ".gif")
