@@ -6,7 +6,7 @@ do
   Widget.lightcolor = 2
   Widget.fgcolor = 3
   Widget.bgcolor = 0
-  Widget.fgtextcolor = 1
+  Widget.fgtextcolor = 2
   Widget.bgtextcolor = 1
   Widget.parent = false
   Widget.font = text.loadfont("Victoria.8b")

@@ -30,7 +30,7 @@ do
     image.draw(self.icon[self.selected and 2 or 1], vw / 2 - iw / 2, 0, 0, 0, iw, ih)
     gfx.fgcolor(self.selected and self.fgcolor or self.bgcolor)
     gfx.bar(vw / 2 - tw / 2, ih + 1, tw, th)
-    gfx.fgcolor(self.fgtextcolor)
+    gfx.fgcolor(self.selected and self.fgtextcolor or self.bgtextcolor)
     text.draw(self.label, self.font, vw / 2 - tw / 2, ih + 1)
     view.active(prevvp)
   end
