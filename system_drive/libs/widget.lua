@@ -115,6 +115,29 @@ do
   function Widget:redraw()
   end
 
+  function Widget:autocolor()
+    self.darkcolor = gfx.nearestcolor(0, 0, 0)
+    self.lightcolor = gfx.nearestcolor(15, 15, 15)
+    self.fgcolor = gfx.nearestcolor(0, 7, 15)
+    self.bgcolor = gfx.nearestcolor(8, 8, 8)
+    local r, g, b = gfx.palette(self.fgcolor)
+    local l = r + g + b
+    self.fgtextcolor = l > 22 and self.darkcolor or self.lightcolor
+    r, g, b = gfx.palette(self.bgcolor)
+    l = r + g + b
+    self.bgtextcolor = l > 22 and self.darkcolor or self.lightcolor
+    if self.children then
+      for name, child in pairs(self.children) do
+        child.darkcolor = self.darkcolor
+        child.lightcolor = self.lightcolor
+        child.fgcolor = self.fgcolor
+        child.bgcolor = self.bgcolor
+        child.fgtextcolor = self.fgtextcolor
+        child.bgtextcolor = self.bgtextcolor
+      end
+    end
+  end
+
   function Widget:outset(x, y, w, h)
     gfx.fgcolor(self.lightcolor)
     gfx.bar(x, y, w, 1)
