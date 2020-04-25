@@ -207,7 +207,11 @@ function render()
       if tool == 1 then
         handle = vec(mx, my)
       elseif focusedactor then
-        handle = vec(focusedactor.position.x - mx, focusedactor.position.y - my)
+        handle =
+          vec(
+          focusedactor.position.x * focusedactor._parallax - mx,
+          focusedactor.position.y * focusedactor._parallax - my
+        )
       end
       if editing == nil and (tool == 2 or tool == 3) then
         if tool == 2 then
@@ -240,20 +244,29 @@ function render()
       mx, my = handle.x, handle.y
     end
     if tool > 4 then
-      focusedactor.position.x = math.floor((grid / 2 + (mx + handle.x)) / grid) * grid
-      focusedactor.position.y = math.floor((grid / 2 + (my + handle.y)) / grid) * grid
+      focusedactor.position.x = math.floor((grid / 2 + (mx + handle.x)) / grid) * grid / focusedactor._parallax
+      focusedactor.position.y = math.floor((grid / 2 + (my + handle.y)) / grid) * grid / focusedactor._parallax
     end
   else
     handle = nil
   end
   sys.stepinterval(-2)
   for i, actor in ipairs(scene.actors) do
-    local screenpos = vec(w / 2 - camera.x + actor.position.x, h / 2 - camera.y + actor.position.y)
+    local screenpos =
+      vec(
+      w / 2 + (actor.position.x - camera.x) * actor._parallax,
+      h / 2 + (actor.position.y - camera.y) * actor._parallax
+    )
     if
-      mb == 0 and actor._size and actor._anchor and mx >= actor.position.x - actor._anchor.x * actor._scale.x and
-        my >= actor.position.y - actor._anchor.y * actor._scale.y and
-        mx < actor.position.x - actor._anchor.x * actor._scale.x + actor._size.x * actor._scale.x and
-        my < actor.position.y - actor._anchor.y * actor._scale.y + actor._size.y * actor._scale.y
+      mb == 0 and actor._size and actor._anchor and
+        mx >= camera.x + (actor.position.x - camera.x) * actor._parallax - actor._anchor.x * actor._scale.x and
+        my >= camera.y + (actor.position.y - camera.y) * actor._parallax - actor._anchor.y * actor._scale.y and
+        mx <
+          camera.x + (actor.position.x - camera.x) * actor._parallax - actor._anchor.x * actor._scale.x +
+            actor._size.x * actor._scale.x and
+        my <
+          camera.y + (actor.position.y - camera.y) * actor._parallax - actor._anchor.y * actor._scale.y +
+            actor._size.y * actor._scale.y
      then
       focusedactor = actor
     end
@@ -360,6 +373,7 @@ function fillactor(actor)
   actor._anchor = actor.anchor or vec(actor._size.x / 2, actor._size.y / 2)
   actor._z = actor.z or 0
   actor._scale = actor.scale or vec(1, 1)
+  actor._parallax = actor.parallax or 1
   actor.position = actor.position or vec(0, 0)
   return actor
 end
@@ -449,7 +463,7 @@ end
 
 function commit()
   local commit = stringifytable(scene)
-  if #history > 0 and history[#history] ~= commit then
+  if #history == 0 or history[#history] ~= commit then
     table.insert(history, commit)
   end
   while #history > 32 do
