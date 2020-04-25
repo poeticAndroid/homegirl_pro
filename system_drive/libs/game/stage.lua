@@ -22,6 +22,9 @@ do
     for i, actor in ipairs(self.scene.actors) do
       self:addactor(actor)
     end
+    if self.scene.music then
+      self.game:changemusic(self.scene.music)
+    end
   end
 
   function Stage:step(t)

@@ -46,6 +46,9 @@ The friction of this actor.
 **`actor.z`**  
 The Z index of this actor.
 
+**`actor.parallax`**  
+Position multiplier relative to camera.
+
 **`actor.tags`**  
 Table of tags for this actor, in addition to its rolename.
 

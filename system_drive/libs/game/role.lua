@@ -16,6 +16,7 @@ do
     self.bounce = 0.5
     self.friction = 0
     self.z = 0
+    self.parallax = 1
     for name, val in pairs(properties) do
       if type(self[name]) == "function" then
         self[name](val)
@@ -60,7 +61,7 @@ do
     Role.step(self, t)
   end
   function Role:draw(t)
-    self.screenpos:set(self.game.size):multiply(0.5):subtract(self.scene.camera):add(self.position)
+    self.screenpos:set(self.position):subtract(self.scene.camera):multiply(self.parallax):add(self.game.center)
     if self.costume then
       if not self._nextframe then
         self._nextframe = t + image.duration(self.costume[self.frame])

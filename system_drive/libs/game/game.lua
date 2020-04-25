@@ -1,4 +1,4 @@
-local Object = require("object")
+local Object, ModPlayer = require("object"), require("modplayer")
 local Vector2 = require(_DIR .. "vector2")
 
 local Game = Object:extend()
@@ -21,6 +21,9 @@ do
       local sc = self.scene
       for i, pad in pairs(self.gamepads) do
         self:_handlegamepad(i)
+      end
+      if self.currentmusic then
+        self.currentmusic:step(t)
       end
       sc:step(t)
       sc:draw(t)
@@ -59,6 +62,18 @@ do
         local file = table.remove(self._assets.sounds)
         if string.sub(file, -4) == ".wav" then
           self.sounds[string.sub(file, 1, -5)] = audio.load(self.gamedir .. "sounds/" .. file)
+          print("  " .. file)
+        end
+      elseif not self.music then
+        self.music = {}
+        self._assets.music = fs.list(self.gamedir .. "music/")
+        if self._assets.music and #(self._assets.music) > 0 then
+          print("Loading music...")
+        end
+      elseif self._assets.music and #(self._assets.music) > 0 then
+        local file = table.remove(self._assets.music)
+        if string.sub(file, -4) == ".mod" then
+          self.music[string.sub(file, 1, -5)] = ModPlayer:new(self.gamedir .. "music/" .. file)
           print("  " .. file)
         end
       elseif not self.roles then
@@ -107,6 +122,7 @@ do
   function Game:start()
     self.screen = view.newscreen(self.screenmode, self.colorbits)
     self.size = Vector2:new(view.size(self.screen))
+    self.center = Vector2:new(self.size):multiply(.5)
     image.copymode(3, true)
     self:framerate(self.targetfps or 50)
     image.pointer(image.new())
@@ -146,6 +162,18 @@ do
         audio.channelloop(channel, 0, audio.samplelength(self.sounds[soundname]))
       else
         audio.channelloop(channel, 0, 0)
+      end
+    end
+  end
+
+  function Game:changemusic(musicname)
+    if self.currentmusic then
+      self.currentmusic:stop()
+    end
+    if self.currentmusic ~= self.music[musicname] then
+      self.currentmusic = self.music[musicname]
+      if self.currentmusic then
+        self.currentmusic:restart()
       end
     end
   end
