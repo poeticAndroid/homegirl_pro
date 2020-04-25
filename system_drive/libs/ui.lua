@@ -277,7 +277,6 @@ do
     local prevvp = view.active()
     local mx, my, mb, bw, bh, bp
     for name, child in pairs(self.children) do
-      child:step(time)
       self.child = child.container
     end
     if not self.child then
@@ -313,6 +312,19 @@ do
       self._scrolly = nil
     end
     self:redraw()
+    local pw, ph = view.size(self.parentvp)
+    if view.focused(self.container) or self._pw ~= pw or self._ph ~= ph then
+      for name, child in pairs(self.children) do
+        child:step(time)
+      end
+      self._pw = pw
+      self._ph = ph
+    end
+    view.active(self.container)
+    mx, my, mb = input.mouse()
+    if mb > 0 then
+      self._pw = nil
+    end
     view.active(prevvp)
   end
   function Scrollbox:redraw()

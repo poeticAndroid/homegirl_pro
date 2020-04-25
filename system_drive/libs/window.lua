@@ -233,10 +233,12 @@ do
     view.active(self._resbtn)
     _x, _y, mbtn = input.mouse()
     if mbtn == 1 then
+      self._resizing = true
       vw, vh = view.size(self._resbtn)
       self:size(mx + vw / 2, my + vh / 2)
       self:redraw()
     else
+      self._resizing = false
       self:position()
     end
 
@@ -258,8 +260,10 @@ do
       self._lastmbtn = mbtn
       self:redraw()
     end
-    for name, child in pairs(self.children) do
-      child:step(time)
+    if not self._moving and not self._resizing then
+      for name, child in pairs(self.children) do
+        child:step(time)
+      end
     end
     view.active(prevvp)
   end
