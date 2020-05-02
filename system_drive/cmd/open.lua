@@ -17,18 +17,16 @@ function _init(args)
   else
     sys.stepinterval(1)
     fs.cd(path.resolve(openfile .. "/.."))
-    local ext = ""
-    if string.find(openfile, "%.") then
-      ext = string.lower(string.sub(openfile, 1 - string.find(string.reverse(openfile), "%.")))
-    end
-    if ext == "lua" then
-      task = sys.startchild(openfile, args)
-    elseif ext == "gif" then
-      task = sys.startchild(_DRIVE .. "cmd/show.lua", {openfile})
-    elseif ext == "wav" then
-      task = sys.startchild(_DRIVE .. "cmd/play.lua", {openfile})
-    elseif ext == "mod" then
+    if string.lower(string.sub(openfile, -10)) == ".scene.lua" then
+      task = sys.startchild(_DRIVE .. "tools/scene.lua", {openfile})
+    elseif string.lower(string.sub(openfile, -4)) == ".mod" then
       task = sys.startchild(_DRIVE .. "cmd/playmod.lua", {openfile})
+    elseif string.lower(string.sub(openfile, -4)) == ".gif" then
+      task = sys.startchild(_DRIVE .. "cmd/show.lua", {openfile})
+    elseif string.lower(string.sub(openfile, -4)) == ".wav" then
+      task = sys.startchild(_DRIVE .. "cmd/play.lua", {openfile})
+    elseif string.lower(string.sub(openfile, -4)) == ".lua" then
+      task = sys.startchild(openfile, args)
     else
       task = sys.startchild(_DRIVE .. "cmd/textview.lua", {openfile})
     end
@@ -295,11 +293,7 @@ function editselected()
   local board = win.children["items"].children["items"]
   local selected = board:getselected()
   for i, name in ipairs(selected) do
-    local ext = ""
-    if string.find(name, "%.") then
-      ext = string.lower(string.sub(name, 1 - string.find(string.reverse(name), "%.")))
-    end
-    if ext == "gif" then
+    if string.lower(string.sub(name, -4)) == ".gif" then
       sys.exec(_DRIVE .. "tools/paint.lua", {name})
     else
       sys.exec(_DRIVE .. "tools/edit.lua", {name})
