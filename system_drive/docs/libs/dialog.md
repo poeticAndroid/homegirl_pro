@@ -25,7 +25,7 @@ function _init()
         print("Oh good..")
       end
     end
-  win:attach("prompt", Dia.Promt:new("Hey there!", "What's your name?"))
+  win:attach("prompt", Dia.Prompt:new("Hey there!", "What's your name?"))
     .ondone = function(prompt, value)
       if value then
         print("Hello "..value.."!")
